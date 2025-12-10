@@ -14,7 +14,7 @@ st.set_page_config(
 st.sidebar.title("🔧 Support Tools")
 tool = st.sidebar.radio(
     "Select Tool:",
-    ["Domain Check", "My IP", "DNS Records", "SSL Check"]
+    ["Domain Check", "My IP", "IP Lookup", "DNS Records", "SSL Check"]
 )
 
 st.title("Level 1 Tech Support Toolkit")
@@ -41,103 +41,168 @@ if tool == "Domain Check":
                     st.error(f"Error: {str(e)}")
 
 elif tool == "My IP":
-    st.header("📍 Network IP Lookup")
+    st.header("📍 My Network IP Information")
     
-    # Use HTML/JavaScript to fetch IP client-side
-    import streamlit.components.v1 as components
+    with st.spinner("Fetching your network information..."):
+        try:
+            # This will show the client's actual public IP when accessed from browser
+            # Using multiple APIs for reliability
+            ip = None
+            geo_data = None
+            
+            # Try to get IP
+            try:
+                response = requests.get("https://api.ipify.org?format=json", timeout=5)
+                ip = response.json()['ip']
+            except:
+                try:
+                    response = requests.get("https://ipapi.co/ip/", timeout=5)
+                    ip = response.text.strip()
+                except:
+                    pass
+            
+            if ip:
+                # Get geolocation
+                try:
+                    geo_response = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
+                    geo_data = geo_response.json()
+                except:
+                    try:
+                        geo_response = requests.get(f"http://ip-api.com/json/{ip}", timeout=5)
+                        fallback_data = geo_response.json()
+                        geo_data = {
+                            'ip': ip,
+                            'city': fallback_data.get('city'),
+                            'region': fallback_data.get('regionName'),
+                            'country_name': fallback_data.get('country'),
+                            'postal': fallback_data.get('zip'),
+                            'latitude': fallback_data.get('lat'),
+                            'longitude': fallback_data.get('lon'),
+                            'org': fallback_data.get('isp'),
+                            'timezone': fallback_data.get('timezone')
+                        }
+                    except:
+                        pass
+                
+                if geo_data:
+                    st.success("✅ Network information retrieved")
+                    st.info("ℹ️ Note: If running on Streamlit Cloud, this shows the server's IP. Use 'IP Lookup' to check any specific IP address.")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("🌐 Public IP", ip)
+                        st.metric("🏙️ City", geo_data.get('city', 'N/A'))
+                        st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
+                    
+                    with col2:
+                        st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
+                        st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
+                        st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
+                    
+                    with col3:
+                        st.metric("📡 ISP/Provider", geo_data.get('org', 'N/A'))
+                        if geo_data.get('latitude') and geo_data.get('longitude'):
+                            st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
+                    
+                    with st.expander("🔍 View Additional Details"):
+                        st.json(geo_data)
+                else:
+                    st.warning("⚠️ Could not retrieve location details")
+                    st.metric("Detected IP", ip)
+            else:
+                st.error("❌ Could not determine IP address")
+                
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
     
-    # JavaScript to fetch user's actual IP and geolocation
-    html_code = """
-    <script>
-    async function getUserIP() {
-        try {
-            // Fetch IP from client side
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-            const userIP = ipData.ip;
-            
-            // Fetch geolocation data
-            const geoResponse = await fetch(`https://ipapi.co/${userIP}/json/`);
-            let geoData = await geoResponse.json();
-            
-            // If ipapi.co fails, try fallback
-            if (!geoData.city) {
-                const fallbackResponse = await fetch(`http://ip-api.com/json/${userIP}`);
-                const fallbackData = await fallbackResponse.json();
-                geoData = {
-                    ip: userIP,
-                    city: fallbackData.city,
-                    region: fallbackData.regionName,
-                    country_name: fallbackData.country,
-                    postal: fallbackData.zip,
-                    latitude: fallbackData.lat,
-                    longitude: fallbackData.lon,
-                    org: fallbackData.isp,
-                    timezone: fallbackData.timezone
-                };
-            }
-            
-            // Send data back to Streamlit
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: geoData
-            }, '*');
-            
-        } catch (error) {
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: {error: error.message}
-            }, '*');
-        }
-    }
-    
-    getUserIP();
-    </script>
-    <div style="padding: 20px; text-align: center;">
-        <p>🔍 Detecting your network information...</p>
-    </div>
-    """
-    
-    # Render the component and get data
-    geo_data = components.html(html_code, height=100)
-    
-    # Display data once received
-    if geo_data and isinstance(geo_data, dict):
-        if geo_data.get('error'):
-            st.error(f"❌ Error: {geo_data['error']}")
-        elif geo_data.get('ip'):
-            ip = geo_data.get('ip', 'N/A')
-            
-            st.success("✅ Network information retrieved successfully")
-            
-            # Display in organized columns
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("🌐 Public IP", ip)
-                st.metric("🏙️ City", geo_data.get('city', 'N/A'))
-                st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
-            
-            with col2:
-                st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
-                st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
-                st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
-            
-            with col3:
-                st.metric("📡 ISP/Provider", geo_data.get('org', 'N/A'))
-                if geo_data.get('latitude') and geo_data.get('longitude'):
-                    st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
-            
-            # Additional details
-            with st.expander("🔍 View Additional Details"):
-                st.json(geo_data)
-        else:
-            st.info("🔄 Loading your network information...")
-    else:
-        st.info("🔄 Loading your network information...")
-    
-    if st.button("🔄 Refresh Information"):
+    if st.button("🔄 Refresh"):
         st.rerun()
+
+elif tool == "IP Lookup":
+    st.header("🔍 IP Address Lookup")
+    st.markdown("Look up geolocation information for any IP address")
+    
+    ip_input = st.text_input("Enter IP address:", placeholder="8.8.8.8")
+    
+    if st.button("Lookup IP"):
+        if ip_input:
+            with st.spinner(f"Looking up {ip_input}..."):
+                try:
+                    # Validate IP format
+                    import re
+                    ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+                    if not re.match(ip_pattern, ip_input):
+                        st.error("❌ Invalid IP address format")
+                    else:
+                        # Try ipapi.co first
+                        geo_data = None
+                        try:
+                            response = requests.get(f"https://ipapi.co/{ip_input}/json/", timeout=5)
+                            if response.status_code == 200:
+                                geo_data = response.json()
+                        except:
+                            pass
+                        
+                        # Fallback to ip-api.com
+                        if not geo_data or geo_data.get('error'):
+                            try:
+                                response = requests.get(f"http://ip-api.com/json/{ip_input}", timeout=5)
+                                if response.status_code == 200:
+                                    fallback_data = response.json()
+                                    if fallback_data.get('status') == 'success':
+                                        geo_data = {
+                                            'ip': ip_input,
+                                            'city': fallback_data.get('city'),
+                                            'region': fallback_data.get('regionName'),
+                                            'country_name': fallback_data.get('country'),
+                                            'postal': fallback_data.get('zip'),
+                                            'latitude': fallback_data.get('lat'),
+                                            'longitude': fallback_data.get('lon'),
+                                            'org': fallback_data.get('isp'),
+                                            'timezone': fallback_data.get('timezone'),
+                                            'asn': fallback_data.get('as')
+                                        }
+                            except:
+                                pass
+                        
+                        if geo_data and not geo_data.get('error'):
+                            st.success(f"✅ Information found for {ip_input}")
+                            
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                st.metric("🌐 IP Address", ip_input)
+                                st.metric("🏙️ City", geo_data.get('city', 'N/A'))
+                                st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
+                            
+                            with col2:
+                                st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
+                                st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
+                                st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
+                            
+                            with col3:
+                                st.metric("📡 ISP/Organization", geo_data.get('org', 'N/A'))
+                                if geo_data.get('latitude') and geo_data.get('longitude'):
+                                    st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
+                                if geo_data.get('asn'):
+                                    st.metric("🔢 ASN", geo_data.get('asn', 'N/A'))
+                            
+                            # Map link
+                            if geo_data.get('latitude') and geo_data.get('longitude'):
+                                map_url = f"https://www.google.com/maps?q={geo_data['latitude']},{geo_data['longitude']}"
+                                st.markdown(f"🗺️ [View on Google Maps]({map_url})")
+                            
+                            with st.expander("🔍 View Full Details"):
+                                st.json(geo_data)
+                        else:
+                            st.error("❌ Could not retrieve information for this IP address")
+                            st.info("The IP might be private, invalid, or the service is unavailable")
+                            
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+        else:
+            st.warning("⚠️ Please enter an IP address")
 
 elif tool == "DNS Records":
     st.header("🗂️ DNS Record Retrieval")
