@@ -41,83 +41,56 @@ if tool == "Domain Check":
                     st.error(f"Error: {str(e)}")
 
 elif tool == "My IP":
-    st.header("📍 My Network IP Information")
+    st.header("📍 Find My IP Address")
+    st.markdown("Discover your public IP address and network information")
     
-    with st.spinner("Fetching your network information..."):
-        try:
-            # This will show the client's actual public IP when accessed from browser
-            # Using multiple APIs for reliability
-            ip = None
-            geo_data = None
-            
-            # Try to get IP
-            try:
-                response = requests.get("https://api.ipify.org?format=json", timeout=5)
-                ip = response.json()['ip']
-            except:
-                try:
-                    response = requests.get("https://ipapi.co/ip/", timeout=5)
-                    ip = response.text.strip()
-                except:
-                    pass
-            
-            if ip:
-                # Get geolocation
-                try:
-                    geo_response = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
-                    geo_data = geo_response.json()
-                except:
-                    try:
-                        geo_response = requests.get(f"http://ip-api.com/json/{ip}", timeout=5)
-                        fallback_data = geo_response.json()
-                        geo_data = {
-                            'ip': ip,
-                            'city': fallback_data.get('city'),
-                            'region': fallback_data.get('regionName'),
-                            'country_name': fallback_data.get('country'),
-                            'postal': fallback_data.get('zip'),
-                            'latitude': fallback_data.get('lat'),
-                            'longitude': fallback_data.get('lon'),
-                            'org': fallback_data.get('isp'),
-                            'timezone': fallback_data.get('timezone')
-                        }
-                    except:
-                        pass
-                
-                if geo_data:
-                    st.success("✅ Network information retrieved")
-                    st.info("ℹ️ Note: If running on Streamlit Cloud, this shows the server's IP. Use 'IP Lookup' to check any specific IP address.")
-                    
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        st.metric("🌐 Public IP", ip)
-                        st.metric("🏙️ City", geo_data.get('city', 'N/A'))
-                        st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
-                    
-                    with col2:
-                        st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
-                        st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
-                        st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
-                    
-                    with col3:
-                        st.metric("📡 ISP/Provider", geo_data.get('org', 'N/A'))
-                        if geo_data.get('latitude') and geo_data.get('longitude'):
-                            st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
-                    
-                    with st.expander("🔍 View Additional Details"):
-                        st.json(geo_data)
-                else:
-                    st.warning("⚠️ Could not retrieve location details")
-                    st.metric("Detected IP", ip)
-            else:
-                st.error("❌ Could not determine IP address")
-                
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+    st.info("💡 Click the button below to open a new tab that will show your real public IP address")
     
-    if st.button("🔄 Refresh"):
-        st.rerun()
+    # Create columns for better layout
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        if st.button("🔍 Get My IP Address", type="primary", use_container_width=True):
+            st.markdown("""
+            <script>
+                window.open('https://www.whatismyip.com/', '_blank');
+            </script>
+            """, unsafe_allow_html=True)
+            st.success("✅ Opened in new tab!")
+    
+    with col2:
+        st.markdown("""
+        **What this does:**
+        - Opens a trusted IP detection site
+        - Shows your real public IP address
+        - No server-side detection needed
+        """)
+    
+    st.divider()
+    
+    st.subheader("🔎 Already know your IP?")
+    st.markdown("Copy your IP address from the opened tab and use the **IP Lookup** tool in the sidebar to get detailed information about it!")
+    
+    # Quick access to IP Lookup
+    st.markdown("""
+    ### Quick Steps:
+    1. ✅ Click "Get My IP Address" button above
+    2. ✅ Copy your IP address from the opened page
+    3. ✅ Go to **IP Lookup** tool (in sidebar)
+    4. ✅ Paste your IP and click "Lookup IP"
+    """)
+    
+    # Alternative links
+    with st.expander("📱 Alternative IP Detection Sites"):
+        st.markdown("""
+        You can also use these trusted sites:
+        - [WhatIsMyIPAddress.com](https://whatismyipaddress.com/)
+        - [IPChicken.com](https://ipchicken.com/)
+        - [IPInfo.io](https://ipinfo.io/)
+        - [ICanHazIP.com](https://icanhazip.com/)
+        
+        All of these will show your real public IP address.
+        """)
 
 elif tool == "IP Lookup":
     st.header("🔍 IP Address Lookup")
