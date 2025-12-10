@@ -46,9 +46,30 @@ elif tool == "My IP":
     # Auto-fetch on page load
     with st.spinner("Fetching your network information..."):
         try:
-            # Get public IP
-            ip_response = requests.get("https://api.ipify.org?format=json", timeout=5)
-            ip = ip_response.json()['ip']
+            # Try to get the user's real IP from Streamlit's request context
+            user_ip = None
+            
+            # Try different methods to get real user IP
+            try:
+                # Method 1: Check if running in Streamlit Cloud
+                from streamlit.web.server.websocket_headers import _get_websocket_headers
+                headers = _get_websocket_headers()
+                if headers:
+                    # Check common proxy headers
+                    user_ip = (headers.get("X-Forwarded-For") or 
+                              headers.get("X-Real-Ip") or 
+                              headers.get("Cf-Connecting-Ip"))
+                    if user_ip and ',' in user_ip:
+                        user_ip = user_ip.split(',')[0].strip()
+            except:
+                pass
+            
+            # Method 2: Fallback to external IP service (gets the actual public IP)
+            if not user_ip:
+                ip_response = requests.get("https://api.ipify.org?format=json", timeout=5)
+                user_ip = ip_response.json()['ip']
+            
+            ip = user_ip
             
             # Try multiple geolocation services for better accuracy
             geo_data = None
