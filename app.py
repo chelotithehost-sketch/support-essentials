@@ -46,24 +46,49 @@ elif tool == "My IP":
     
     st.info("💡 Click the button below to open a new tab that will show your real public IP address")
     
-    # Create columns for better layout
-    col1, col2 = st.columns([1, 2])
+    # Create a prominent link button
+    st.markdown("""
+    <div style="text-align: center; padding: 20px;">
+        <a href="https://www.whatismyip.com/" target="_blank" style="
+            display: inline-block;
+            padding: 15px 40px;
+            background-color: #FF4B4B;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        ">
+            🔍 Get My IP Address
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="text-align: center; margin-top: 10px; color: #666;">
+        <small>Click the button above to open a trusted IP detection site in a new tab</small>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🔍 Get My IP Address", type="primary", use_container_width=True):
-            st.markdown("""
-            <script>
-                window.open('https://www.whatismyip.com/', '_blank');
-            </script>
-            """, unsafe_allow_html=True)
-            st.success("✅ Opened in new tab!")
-    
-    with col2:
         st.markdown("""
         **What this does:**
         - Opens a trusted IP detection site
         - Shows your real public IP address
         - No server-side detection needed
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Alternative Sites:**
+        - [IPChicken.com](https://ipchicken.com/)
+        - [IPInfo.io](https://ipinfo.io/)
+        - [ICanHazIP.com](https://icanhazip.com/)
         """)
     
     st.divider()
@@ -80,17 +105,7 @@ elif tool == "My IP":
     4. ✅ Paste your IP and click "Lookup IP"
     """)
     
-    # Alternative links
-    with st.expander("📱 Alternative IP Detection Sites"):
-        st.markdown("""
-        You can also use these trusted sites:
-        - [WhatIsMyIPAddress.com](https://whatismyipaddress.com/)
-        - [IPChicken.com](https://ipchicken.com/)
-        - [IPInfo.io](https://ipinfo.io/)
-        - [ICanHazIP.com](https://icanhazip.com/)
-        
-        All of these will show your real public IP address.
-        """)
+
 
 elif tool == "IP Lookup":
     st.header("🔍 IP Address Lookup")
