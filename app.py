@@ -43,96 +43,96 @@ if tool == "Domain Check":
 elif tool == "My IP":
     st.header("📍 Network IP Lookup")
     
-    # Auto-fetch on page load
-    with st.spinner("Fetching your network information..."):
-        try:
-            # Try to get the user's real IP from Streamlit's request context
-            user_ip = None
+    # Use HTML/JavaScript to fetch IP client-side
+    import streamlit.components.v1 as components
+    
+    # JavaScript to fetch user's actual IP and geolocation
+    html_code = """
+    <script>
+    async function getUserIP() {
+        try {
+            // Fetch IP from client side
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            const userIP = ipData.ip;
             
-            # Try different methods to get real user IP
-            try:
-                # Method 1: Check if running in Streamlit Cloud
-                from streamlit.web.server.websocket_headers import _get_websocket_headers
-                headers = _get_websocket_headers()
-                if headers:
-                    # Check common proxy headers
-                    user_ip = (headers.get("X-Forwarded-For") or 
-                              headers.get("X-Real-Ip") or 
-                              headers.get("Cf-Connecting-Ip"))
-                    if user_ip and ',' in user_ip:
-                        user_ip = user_ip.split(',')[0].strip()
-            except:
-                pass
+            // Fetch geolocation data
+            const geoResponse = await fetch(`https://ipapi.co/${userIP}/json/`);
+            let geoData = await geoResponse.json();
             
-            # Method 2: Fallback to external IP service (gets the actual public IP)
-            if not user_ip:
-                ip_response = requests.get("https://api.ipify.org?format=json", timeout=5)
-                user_ip = ip_response.json()['ip']
+            // If ipapi.co fails, try fallback
+            if (!geoData.city) {
+                const fallbackResponse = await fetch(`http://ip-api.com/json/${userIP}`);
+                const fallbackData = await fallbackResponse.json();
+                geoData = {
+                    ip: userIP,
+                    city: fallbackData.city,
+                    region: fallbackData.regionName,
+                    country_name: fallbackData.country,
+                    postal: fallbackData.zip,
+                    latitude: fallbackData.lat,
+                    longitude: fallbackData.lon,
+                    org: fallbackData.isp,
+                    timezone: fallbackData.timezone
+                };
+            }
             
-            ip = user_ip
+            // Send data back to Streamlit
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: geoData
+            }, '*');
             
-            # Try multiple geolocation services for better accuracy
-            geo_data = None
+        } catch (error) {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: {error: error.message}
+            }, '*');
+        }
+    }
+    
+    getUserIP();
+    </script>
+    <div style="padding: 20px; text-align: center;">
+        <p>🔍 Detecting your network information...</p>
+    </div>
+    """
+    
+    # Render the component and get data
+    geo_data = components.html(html_code, height=100)
+    
+    # Display data once received
+    if geo_data:
+        if 'error' in geo_data:
+            st.error(f"❌ Error: {geo_data['error']}")
+        else:
+            ip = geo_data.get('ip', 'N/A')
             
-            # Try ipapi.co first (most detailed)
-            try:
-                geo_response = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
-                if geo_response.status_code == 200:
-                    geo_data = geo_response.json()
-            except:
-                pass
+            st.success("✅ Network information retrieved successfully")
             
-            # Fallback to ip-api.com if ipapi.co fails
-            if not geo_data or 'city' not in geo_data:
-                try:
-                    geo_response = requests.get(f"http://ip-api.com/json/{ip}", timeout=5)
-                    if geo_response.status_code == 200:
-                        fallback_data = geo_response.json()
-                        geo_data = {
-                            'ip': ip,
-                            'city': fallback_data.get('city'),
-                            'region': fallback_data.get('regionName'),
-                            'country_name': fallback_data.get('country'),
-                            'postal': fallback_data.get('zip'),
-                            'latitude': fallback_data.get('lat'),
-                            'longitude': fallback_data.get('lon'),
-                            'org': fallback_data.get('isp'),
-                            'timezone': fallback_data.get('timezone')
-                        }
-                except:
-                    pass
+            # Display in organized columns
+            col1, col2, col3 = st.columns(3)
             
-            if geo_data:
-                st.success("✅ Network information retrieved successfully")
-                
-                # Display in organized columns
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.metric("🌐 Public IP", ip)
-                    st.metric("🏙️ City", geo_data.get('city', 'N/A'))
-                    st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
-                
-                with col2:
-                    st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
-                    st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
-                    st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
-                
-                with col3:
-                    st.metric("📡 ISP/Provider", geo_data.get('org', 'N/A'))
-                    if geo_data.get('latitude') and geo_data.get('longitude'):
-                        st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
-                
-                # Additional details
-                with st.expander("🔍 View Additional Details"):
-                    st.json(geo_data)
-                    
-            else:
-                st.warning("⚠️ Could not retrieve detailed location information")
-                st.metric("Your Public IP", ip)
-                
-        except Exception as e:
-            st.error(f"❌ Error fetching network information: {str(e)}")
+            with col1:
+                st.metric("🌐 Public IP", ip)
+                st.metric("🏙️ City", geo_data.get('city', 'N/A'))
+                st.metric("📮 Postal Code", geo_data.get('postal', 'N/A'))
+            
+            with col2:
+                st.metric("🗺️ Region", geo_data.get('region', 'N/A'))
+                st.metric("🌍 Country", geo_data.get('country_name', 'N/A'))
+                st.metric("🕐 Timezone", geo_data.get('timezone', 'N/A'))
+            
+            with col3:
+                st.metric("📡 ISP/Provider", geo_data.get('org', 'N/A'))
+                if geo_data.get('latitude') and geo_data.get('longitude'):
+                    st.metric("📍 Coordinates", f"{geo_data['latitude']:.4f}, {geo_data['longitude']:.4f}")
+            
+            # Additional details
+            with st.expander("🔍 View Additional Details"):
+                st.json(geo_data)
+    else:
+        st.info("🔄 Loading your network information...")
     
     if st.button("🔄 Refresh Information"):
         st.rerun()
