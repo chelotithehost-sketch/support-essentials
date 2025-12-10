@@ -127,60 +127,175 @@ if tool == "Domain Check":
                     st.warning(f"⚠️ Could not check SOA: {str(e)}")
                 
                 # 4. WHOIS/Registration Status Check
-                st.subheader("📝 Domain Registration Status")
-                try:
-                    # Using a free WHOIS API
-                    whois_response = requests.get(f"https://who-dat.as93.net/{domain}", timeout=10)
+                st.subheader("📝 Domain Registration & WHOIS Information")
+                
+                whois_data = None
+                whois_success = False
+                
+                # Try multiple WHOIS APIs for better coverage
+                whois_apis = [
+                    {
+                        'name': 'WHOIS JSON API',
+                        'url': f"https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_free&domainName={domain}&outputFormat=json",
+                        'parser': lambda r: r.json().get('WhoisRecord', {})
+                    },
+                    {
+                        'name': 'RDAP',
+                        'url': f"https://rdap.org/domain/{domain}",
+                        'parser': lambda r: r.json()
+                    }
+                ]
+                
+                for api in whois_apis:
+                    try:
+                        whois_response = requests.get(api['url'], timeout=10)
+                        if whois_response.status_code == 200:
+                            whois_data = api['parser'](whois_response)
+                            if whois_data:
+                                whois_success = True
+                                break
+                    except:
+                        continue
+                
+                if whois_success and whois_data:
+                    st.success("✅ WHOIS information retrieved")
                     
-                    if whois_response.status_code == 200:
-                        whois_data = whois_response.json()
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Domain name
+                        domain_name = (whois_data.get('domainName') or 
+                                     whois_data.get('ldhName') or 
+                                     whois_data.get('domain_name') or domain)
+                        st.write(f"**Domain:** {domain_name}")
                         
-                        col1, col2 = st.columns(2)
+                        # Registrar
+                        registrar = (whois_data.get('registrarName') or 
+                                   whois_data.get('registrar') or
+                                   whois_data.get('sponsoringRegistrar', 'N/A'))
+                        if registrar != 'N/A':
+                            st.write(f"**Registrar:** {registrar}")
                         
-                        with col1:
-                            if whois_data.get('domain_name'):
-                                st.write(f"**Domain:** {whois_data['domain_name']}")
-                            if whois_data.get('registrar'):
-                                st.write(f"**Registrar:** {whois_data['registrar']}")
-                            if whois_data.get('status'):
-                                statuses = whois_data['status'] if isinstance(whois_data['status'], list) else [whois_data['status']]
-                                st.write("**Status:**")
-                                for status in statuses:
-                                    if 'ok' in status.lower() or 'active' in status.lower():
-                                        st.success(f"✅ {status}")
-                                    elif 'hold' in status.lower() or 'lock' in status.lower():
-                                        st.warning(f"⚠️ {status}")
-                                        warnings.append(f"Domain status: {status}")
-                                    elif 'expired' in status.lower() or 'suspended' in status.lower():
-                                        st.error(f"❌ {status}")
-                                        issues.append(f"Domain status: {status}")
-                                    else:
-                                        st.info(f"ℹ️ {status}")
+                        # Status
+                        status_list = (whois_data.get('status') or 
+                                     whois_data.get('domainStatus') or
+                                     [])
                         
-                        with col2:
-                            if whois_data.get('creation_date'):
-                                st.write(f"**Created:** {whois_data['creation_date']}")
-                            if whois_data.get('expiration_date'):
-                                st.write(f"**Expires:** {whois_data['expiration_date']}")
-                                # Check if expiring soon
-                                try:
-                                    from datetime import datetime
-                                    expiry = datetime.strptime(whois_data['expiration_date'], '%Y-%m-%d')
-                                    days_left = (expiry - datetime.now()).days
-                                    if days_left < 30:
-                                        st.error(f"⚠️ Expires in {days_left} days!")
-                                        issues.append(f"Domain expires soon ({days_left} days)")
-                                    elif days_left < 90:
-                                        st.warning(f"⚠️ Expires in {days_left} days")
-                                except:
-                                    pass
+                        if status_list:
+                            st.write("**Domain Status:**")
+                            if not isinstance(status_list, list):
+                                status_list = [status_list]
+                            
+                            for status in status_list:
+                                # Extract status text (sometimes comes with URLs)
+                                status_text = status.split()[0] if isinstance(status, str) else str(status)
+                                
+                                # Categorize status
+                                status_lower = status_text.lower()
+                                if any(x in status_lower for x in ['ok', 'active', 'registered']):
+                                    st.success(f"✅ {status_text}")
+                                    success_checks.append("Domain status: Active/OK")
+                                elif any(x in status_lower for x in ['hold', 'lock', 'frozen', 'suspended']):
+                                    st.error(f"❌ {status_text}")
+                                    issues.append(f"Domain on hold/locked: {status_text}")
+                                elif any(x in status_lower for x in ['pending', 'verification']):
+                                    st.warning(f"⚠️ {status_text}")
+                                    warnings.append(f"Domain pending: {status_text}")
+                                elif 'expired' in status_lower:
+                                    st.error(f"❌ {status_text}")
+                                    issues.append(f"Domain expired: {status_text}")
+                                else:
+                                    st.info(f"ℹ️ {status_text}")
                         
-                        success_checks.append("WHOIS data retrieved")
-                    else:
-                        st.info("ℹ️ Could not retrieve detailed registration info")
+                        # Registrant info (if available)
+                        registrant_org = (whois_data.get('registrant', {}).get('organization') if isinstance(whois_data.get('registrant'), dict) else
+                                        whois_data.get('registrantOrganization'))
+                        if registrant_org:
+                            st.write(f"**Registrant:** {registrant_org}")
+                    
+                    with col2:
+                        # Dates
+                        created_date = (whois_data.get('createdDate') or 
+                                      whois_data.get('creationDate') or
+                                      whois_data.get('created') or
+                                      (whois_data.get('events', [{}])[0].get('eventDate') if whois_data.get('events') else None))
                         
-                except Exception as e:
-                    st.info("ℹ️ Detailed registration info unavailable")
+                        expires_date = (whois_data.get('expiresDate') or
+                                      whois_data.get('expirationDate') or
+                                      whois_data.get('expires') or
+                                      next((e.get('eventDate') for e in whois_data.get('events', []) if e.get('eventAction') == 'expiration'), None))
+                        
+                        updated_date = (whois_data.get('updatedDate') or
+                                      whois_data.get('updated') or
+                                      next((e.get('eventDate') for e in whois_data.get('events', []) if e.get('eventAction') == 'last changed'), None))
+                        
+                        if created_date:
+                            # Clean up date format
+                            created_display = created_date.split('T')[0] if 'T' in str(created_date) else str(created_date)
+                            st.write(f"**Created:** {created_display}")
+                        
+                        if updated_date:
+                            updated_display = updated_date.split('T')[0] if 'T' in str(updated_date) else str(updated_date)
+                            st.write(f"**Updated:** {updated_display}")
+                        
+                        if expires_date:
+                            expires_display = expires_date.split('T')[0] if 'T' in str(expires_date) else str(expires_date)
+                            st.write(f"**Expires:** {expires_display}")
+                            
+                            # Calculate days until expiration
+                            try:
+                                from datetime import datetime
+                                # Try different date formats
+                                for date_format in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%SZ']:
+                                    try:
+                                        expiry = datetime.strptime(expires_date.split('.')[0].rstrip('Z'), date_format)
+                                        break
+                                    except:
+                                        continue
+                                
+                                days_left = (expiry - datetime.now()).days
+                                
+                                if days_left < 0:
+                                    st.error(f"❌ Domain expired {abs(days_left)} days ago!")
+                                    issues.append(f"Domain expired {abs(days_left)} days ago")
+                                elif days_left < 30:
+                                    st.error(f"⚠️ Expires in {days_left} days - URGENT RENEWAL NEEDED!")
+                                    issues.append(f"Domain expires in {days_left} days")
+                                elif days_left < 90:
+                                    st.warning(f"⚠️ Expires in {days_left} days - Consider renewing soon")
+                                    warnings.append(f"Domain expires in {days_left} days")
+                                else:
+                                    st.success(f"✅ {days_left} days until expiration")
+                            except Exception as date_error:
+                                pass
+                        
+                        # Nameservers from WHOIS
+                        whois_nameservers = (whois_data.get('nameServers') or 
+                                           whois_data.get('nameservers') or
+                                           [ns.get('ldhName') for ns in whois_data.get('nameservers', []) if isinstance(ns, dict)])
+                        
+                        if whois_nameservers:
+                            st.write("**WHOIS Nameservers:**")
+                            for ns in whois_nameservers[:3]:  # Show first 3
+                                ns_clean = ns.lower().rstrip('.') if isinstance(ns, str) else str(ns)
+                                st.caption(f"• {ns_clean}")
+                    
+                    # Full WHOIS data in expander
+                    with st.expander("🔍 View Full WHOIS Data"):
+                        st.json(whois_data)
+                    
+                    success_checks.append("WHOIS lookup successful")
+                    
+                else:
+                    st.warning("⚠️ Could not retrieve WHOIS information")
+                    st.info("""
+                    **Possible reasons:**
+                    - Domain is newly registered (WHOIS not propagated yet)
+                    - TLD uses privacy protection
+                    - WHOIS service temporarily unavailable
+                    - Rate limiting on free WHOIS APIs
+                    """)
+                    warnings.append("WHOIS data unavailable")
                 
                 # 5. Summary Report
                 st.divider()
