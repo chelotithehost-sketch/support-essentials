@@ -102,10 +102,10 @@ elif tool == "My IP":
     geo_data = components.html(html_code, height=100)
     
     # Display data once received
-    if geo_data:
-        if 'error' in geo_data:
+    if geo_data and isinstance(geo_data, dict):
+        if geo_data.get('error'):
             st.error(f"❌ Error: {geo_data['error']}")
-        else:
+        elif geo_data.get('ip'):
             ip = geo_data.get('ip', 'N/A')
             
             st.success("✅ Network information retrieved successfully")
@@ -131,6 +131,8 @@ elif tool == "My IP":
             # Additional details
             with st.expander("🔍 View Additional Details"):
                 st.json(geo_data)
+        else:
+            st.info("🔄 Loading your network information...")
     else:
         st.info("🔄 Loading your network information...")
     
