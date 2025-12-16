@@ -1,2 +1,3 @@
 streamlit
 requests
+python-whois  # <--- This is essential for the new code!
