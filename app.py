@@ -282,40 +282,61 @@ if tool == "Domain Check":
                             st.write(f"**Registrant:** {registrant}")
                     
                     with col2:
-                        # Dates
-                        created_date = (whois_data.get('created') or
-                                      whois_data.get('create_date') or
-                                      whois_data.get('createdDate') or 
-                                      whois_data.get('creationDate') or
-                                      whois_data.get('creation_date'))
+                        # Dates - handle RDAP events array
+                        created_date = None
+                        expires_date = None
+                        updated_date = None
                         
-                        expires_date = (whois_data.get('expires') or
-                                      whois_data.get('expire_date') or
-                                      whois_data.get('expiresDate') or
-                                      whois_data.get('expirationDate') or
-                                      whois_data.get('expiration_date') or
-                                      whois_data.get('registry_expiry_date'))
+                        # Check for events array (RDAP format)
+                        if whois_data.get('events'):
+                            for event in whois_data['events']:
+                                action = event.get('eventAction', '').lower()
+                                date = event.get('eventDate')
+                                
+                                if action == 'registration' and not created_date:
+                                    created_date = date
+                                elif action == 'expiration' and not expires_date:
+                                    expires_date = date
+                                elif action in ['last changed', 'last update'] and not updated_date:
+                                    updated_date = date
                         
-                        updated_date = (whois_data.get('updated') or
-                                      whois_data.get('update_date') or
-                                      whois_data.get('updatedDate') or
-                                      whois_data.get('last_updated'))
+                        # Fallback to direct fields
+                        if not created_date:
+                            created_date = (whois_data.get('created') or
+                                          whois_data.get('create_date') or
+                                          whois_data.get('createdDate') or 
+                                          whois_data.get('creationDate') or
+                                          whois_data.get('creation_date'))
+                        
+                        if not expires_date:
+                            expires_date = (whois_data.get('expires') or
+                                          whois_data.get('expire_date') or
+                                          whois_data.get('expiresDate') or
+                                          whois_data.get('expirationDate') or
+                                          whois_data.get('expiration_date') or
+                                          whois_data.get('registry_expiry_date'))
+                        
+                        if not updated_date:
+                            updated_date = (whois_data.get('updated') or
+                                          whois_data.get('update_date') or
+                                          whois_data.get('updatedDate') or
+                                          whois_data.get('last_updated'))
                         
                         if created_date:
-                            created_display = str(created_date).split('T')[0].split(' ')[0]
+                            created_display = str(created_date).split('T')[0]
                             st.write(f"**Created:** {created_display}")
                         
                         if updated_date:
-                            updated_display = str(updated_date).split('T')[0].split(' ')[0]
+                            updated_display = str(updated_date).split('T')[0]
                             st.write(f"**Updated:** {updated_display}")
                         
                         if expires_date:
-                            expires_display = str(expires_date).split('T')[0].split(' ')[0]
+                            expires_display = str(expires_date).split('T')[0]
                             st.write(f"**Expires:** {expires_display}")
                             
                             # Calculate expiration
                             try:
-                                expires_clean = str(expires_date).split('T')[0].split(' ')[0]
+                                expires_clean = str(expires_date).split('T')[0]
                                 expiry = datetime.strptime(expires_clean, '%Y-%m-%d')
                                 days_left = (expiry - datetime.now()).days
                                 
@@ -333,12 +354,23 @@ if tool == "Domain Check":
                             except:
                                 pass
                         
-                        # Nameservers
-                        nameservers = whois_data.get('nameservers', [])
-                        if nameservers and isinstance(nameservers, list):
+                        # Nameservers - handle RDAP nameservers array properly
+                        nameservers = []
+                        
+                        if whois_data.get('nameservers'):
+                            for ns in whois_data['nameservers']:
+                                if isinstance(ns, dict):
+                                    # RDAP format - extract ldhName or unicodeName
+                                    ns_name = ns.get('ldhName') or ns.get('unicodeName')
+                                    if ns_name:
+                                        nameservers.append(ns_name)
+                                elif isinstance(ns, str):
+                                    nameservers.append(ns)
+                        
+                        if nameservers:
                             st.write("**WHOIS Nameservers:**")
                             for ns in nameservers[:3]:
-                                ns_clean = str(ns).lower().rstrip('.').split()[0]
+                                ns_clean = str(ns).lower().rstrip('.')
                                 st.caption(f"• {ns_clean}")
                     
                     # Raw WHOIS data
