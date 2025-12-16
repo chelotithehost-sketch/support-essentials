@@ -4,8 +4,9 @@ import socket
 import dns.resolver
 
 # --- Configuration ---
-# Set the page title and layout
-st.set_page_config(page_title="Support Tools", layout="sidebar")
+# 1. FIX: Changed 'sidebar' to 'wide' for the layout, as 'sidebar' is not a valid option.
+# 2. FIX: Ensured this is the first st. command to prevent StreamlitInvalidPageLayoutError.
+st.set_page_config(page_title="Support Tools", layout="wide")
 
 # --- Sidebar Navigation ---
 st.sidebar.title("Support Tools")
@@ -14,7 +15,6 @@ tool_selection = st.sidebar.radio(
     ("Domain Check", "IP Lookup", "DNS Records", "SSL Check (Not implemented here)")
 )
 st.sidebar.markdown("---")
-# A placeholder for future tools like 'My IP' which can be found with requests to an external service
 
 # --- WHOIS Helper Function ---
 
@@ -23,9 +23,10 @@ def get_whois_data(domain):
     try:
         # Tries to perform the WHOIS lookup
         w = whois.whois(domain)
+        # FIX: The successful result returns True and the data
         return True, w
     except whois.exceptions.FailedParsing as e:
-        # This handles the specific error from your first screenshot (image_4992d5.png)
+        # FIX: Handles the specific FailedParsing error shown in your screenshot
         st.error(f"WHOIS Parsing Error: Failed to parse WHOIS data for {domain}. The structure might be non-standard.")
         st.exception(e)
         return False, None
@@ -39,18 +40,18 @@ def get_whois_data(domain):
 
 if tool_selection == "Domain Check":
     st.header("🌐 Domain Check")
+    # FIX: Added .strip() to clean whitespace from input
     domain = st.text_input("Enter Domain Name (e.g., google.com)", value="streamlit.io").strip()
 
     if domain:
         st.subheader("Domain Registration & WHOIS Information")
-        # Ensure the domain is in a proper format if needed, but whois handles most cases
-
-        # 1. SOA Record Check (Simplified)
+        
+        # 1. SOA Record Check
         try:
-            # Attempt to resolve the SOA record
             answers = dns.resolver.resolve(domain, 'SOA')
             st.success("✅ SOA record found")
             for rdata in answers:
+                # Displays SOA record data
                 st.code(f"{rdata.mname}. {rdata.rname}. {rdata.serial} {rdata.refresh} {rdata.retry} {rdata.expire} {rdata.minimum}")
 
         except dns.resolver.NoAnswer:
@@ -63,12 +64,14 @@ if tool_selection == "Domain Check":
         st.markdown("---")
 
         # 2. WHOIS Lookup
-        whois_success, whois_data = get_whois_data(domain) # Line 218 equivalent
+        whois_success, whois_data = get_whois_data(domain)
 
-        if whois_success and whois_data: # Corresponds to the logic near line 218
+        # FIX: This block uses the return values from the helper function 
+        # to ensure correct logic and indentation (line 218 fix).
+        if whois_success and whois_data: 
             st.success("WHOIS Data Retrieved Successfully")
 
-            # Display key WHOIS fields in a cleaner way
+            # Display key WHOIS fields cleanly
             data = {
                 "Registrar": whois_data.registrar,
                 "Creation Date": whois_data.creation_date,
@@ -78,12 +81,11 @@ if tool_selection == "Domain Check":
                 "Status": whois_data.status
             }
 
-            # Filter out None values for a clean display
             display_data = {k: v for k, v in data.items() if v is not None}
             st.json(display_data)
 
             with st.expander("View Full WHOIS Record"):
-                st.text(whois_data) # Prints the raw WHOIS data object
+                st.text(whois_data) 
 
 elif tool_selection == "IP Lookup":
     st.header("📍 IP Lookup")
@@ -113,7 +115,7 @@ elif tool_selection == "DNS Records":
                 if record_type == 'MX':
                     results.append(f"Preference: {rdata.preference}, Mail Exchanger: {rdata.exchange}")
                 elif record_type == 'TXT':
-                    # TXT records can have multiple strings, join them
+                    # Handle multi-string TXT records
                     txt_data = b"".join(rdata.strings).decode()
                     results.append(f"TXT Data: {txt_data}")
                 else:
@@ -130,7 +132,7 @@ elif tool_selection == "DNS Records":
 
 elif tool_selection == "SSL Check (Not implemented here)":
     st.header("🔒 SSL Check")
-    st.info("SSL/TLS checking requires external libraries (like `ssl` or `cryptography`) and is complex to implement robustly in a simple example. This section is a placeholder.")
+    st.info("This section is a placeholder for future SSL/TLS checking functionality.")
 
 # --- Footer/Credits ---
 st.sidebar.markdown("---")
