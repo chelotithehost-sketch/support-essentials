@@ -134,77 +134,116 @@ if tool == "Domain Check":
                 whois_success = False
                 whois_raw = None
                 
+                # Extract TLD for specific handling
+                tld = domain.split('.')[-1].lower()
+                second_level_tld = '.'.join(domain.split('.')[-2:]).lower() if len(domain.split('.')) > 2 else None
+                
                 # Method 1: Try system WHOIS command (best for ccTLDs)
                 try:
-                    result = subprocess.run(
-                        ['whois', domain],
-                        capture_output=True,
-                        text=True,
-                        timeout=15
-                    )
+                    # Some ccTLDs need specific WHOIS servers
+                    whois_servers = {
+                        'za': 'whois.registry.net.za',
+                        'co.za': 'whois.registry.net.za',
+                        'ng': 'whois.nic.net.ng',
+                        'ke': 'whois.kenic.or.ke',
+                        'tz': 'whois.tznic.or.tz',
+                        'gh': 'whois.nic.gh',
+                        'ug': 'whois.co.ug'
+                    }
                     
-                    if result.returncode == 0 and result.stdout:
-                        whois_raw = result.stdout
-                        
+                    # Determine which server to use
+                    whois_server = None
+                    if second_level_tld and second_level_tld in whois_servers:
+                        whois_server = whois_servers[second_level_tld]
+                    elif tld in whois_servers:
+                        whois_server = whois_servers[tld]
+                    
+                    # Try with specific server first, then default
+                    whois_commands = []
+                    if whois_server:
+                        whois_commands.append(['whois', '-h', whois_server, domain])
+                    whois_commands.append(['whois', domain])
+                    
+                    for cmd in whois_commands:
+                        try:
+                            result = subprocess.run(
+                                cmd,
+                                capture_output=True,
+                                text=True,
+                                timeout=15
+                            )
+                            
+                            if result.returncode == 0 and result.stdout and len(result.stdout) > 100:
+                                whois_raw = result.stdout
+                                break
+                        except:
+                            continue
+                    
+                    if whois_raw:
                         # Parse the WHOIS output
                         whois_data = {}
                         lines = whois_raw.split('\n')
                         
                         for line in lines:
                             line = line.strip()
-                            if ':' in line and not line.startswith('%') and not line.startswith('#'):
-                                key, value = line.split(':', 1)
-                                key = key.strip().lower().replace(' ', '_')
-                                value = value.strip()
-                                
-                                # Collect important fields
-                                if key in ['domain_name', 'domain']:
-                                    whois_data['domain'] = value
-                                elif key in ['registrar', 'registrar_name']:
-                                    whois_data['registrar'] = value
-                                elif key in ['creation_date', 'created', 'registered', 'created_date']:
-                                    whois_data['created'] = value
-                                elif key in ['expiration_date', 'expiry_date', 'expires', 'registry_expiry_date']:
-                                    whois_data['expires'] = value
-                                elif key in ['updated_date', 'updated', 'last_updated', 'modified']:
-                                    whois_data['updated'] = value
-                                elif key in ['status', 'domain_status']:
-                                    if 'status' not in whois_data:
-                                        whois_data['status'] = []
-                                    whois_data['status'].append(value)
-                                elif key in ['name_server', 'nserver', 'nameserver']:
-                                    if 'nameservers' not in whois_data:
-                                        whois_data['nameservers'] = []
-                                    whois_data['nameservers'].append(value)
-                                elif key in ['registrant', 'registrant_name', 'registrant_organization']:
-                                    whois_data['registrant'] = value
+                            if ':' in line and not line.startswith('%') and not line.startswith('#') and not line.startswith(';'):
+                                parts = line.split(':', 1)
+                                if len(parts) == 2:
+                                    key = parts[0].strip().lower().replace(' ', '_').replace('-', '_')
+                                    value = parts[1].strip()
+                                    
+                                    if not value:
+                                        continue
+                                    
+                                    # Collect important fields
+                                    if key in ['domain_name', 'domain', 'domain_name:', 'domain:']:
+                                        whois_data['domain'] = value
+                                    elif key in ['registrar', 'registrar_name', 'registrar:', 'sponsoring_registrar']:
+                                        whois_data['registrar'] = value
+                                    elif key in ['creation_date', 'created', 'registered', 'created_date', 'created:', 'registered:', 'registration_date']:
+                                        whois_data['created'] = value
+                                    elif key in ['expiration_date', 'expiry_date', 'expires', 'registry_expiry_date', 'expires:', 'expiry:', 'expire_date']:
+                                        whois_data['expires'] = value
+                                    elif key in ['updated_date', 'updated', 'last_updated', 'modified', 'updated:', 'last_modified', 'changed']:
+                                        whois_data['updated'] = value
+                                    elif key in ['status', 'domain_status', 'status:', 'domain_status:']:
+                                        if 'status' not in whois_data:
+                                            whois_data['status'] = []
+                                        # Clean status value
+                                        status_clean = value.split()[0] if value else value
+                                        if status_clean and status_clean not in whois_data['status']:
+                                            whois_data['status'].append(status_clean)
+                                    elif key in ['name_server', 'nserver', 'nameserver', 'name_servers', 'nameservers', 'nserver:', 'name_server:']:
+                                        if 'nameservers' not in whois_data:
+                                            whois_data['nameservers'] = []
+                                        # Clean nameserver value (remove IPs if present)
+                                        ns_clean = value.split()[0].lower() if value else value
+                                        if ns_clean and ns_clean not in whois_data['nameservers']:
+                                            whois_data['nameservers'].append(ns_clean)
+                                    elif key in ['registrant', 'registrant_name', 'registrant_organization', 'registrant:', 'registrant_org']:
+                                        if 'REDACTED' not in value.upper() and 'PRIVATE' not in value.upper():
+                                            whois_data['registrant'] = value
                         
-                        if whois_data.get('domain') or whois_data.get('registrar'):
+                        if whois_data.get('domain') or whois_data.get('status') or whois_data.get('nameservers'):
                             whois_success = True
                             
                 except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as whois_error:
-                    # WHOIS command not available or failed, try APIs
+                    # WHOIS command not available or failed
                     pass
                 
                 # Method 2: Try APIs if system WHOIS failed
                 if not whois_success:
                     whois_apis = [
                         {
+                            'name': 'RDAP',
+                            'url': f"https://rdap.org/domain/{domain}",
+                            'test': lambda r: r.status_code == 200 and r.json().get('ldhName'),
+                            'parser': lambda r: r.json()
+                        },
+                        {
                             'name': 'IP2WHOIS',
                             'url': f"https://api.ip2whois.com/v2?key=free&domain={domain}",
                             'test': lambda r: r.json().get('domain') is not None,
-                            'parser': lambda r: r.json()
-                        },
-                        {
-                            'name': 'RDAP',
-                            'url': f"https://rdap.org/domain/{domain}",
-                            'test': lambda r: r.status_code == 200,
-                            'parser': lambda r: r.json()
-                        },
-                        {
-                            'name': 'WhoisFreaks',
-                            'url': f"https://api.whoisfreaks.com/v1.0/whois?apiKey=free&whois=live&domainName={domain}",
-                            'test': lambda r: r.json().get('domain_name') is not None,
                             'parser': lambda r: r.json()
                         }
                     ]
@@ -429,25 +468,45 @@ if tool == "Domain Check":
                     
                 else:
                     st.warning("⚠️ Could not retrieve WHOIS information")
-                    st.info("""
-                    **For ccTLD domains (.co.za, .co.ke, etc.), try manual lookup:**
+                    
+                    # Provide ccTLD-specific help
+                    st.info(f"""
+                    **For .{tld} domains, try manual lookup at:**
                     """)
                     
                     # ccTLD-specific WHOIS links
-                    tld = domain.split('.')[-1]
+                    ccTLD_registries = {
+                        'za': ('ZACR', 'https://www.registry.net.za/'),
+                        'co.za': ('ZACR', 'https://www.registry.net.za/'),
+                        'ng': ('NiRA', 'https://www.nira.org.ng/'),
+                        'ke': ('KENIC', 'https://www.kenic.or.ke/'),
+                        'tz': ('tzNIC', 'https://www.tznic.or.tz/'),
+                        'gh': ('NIC Ghana', 'https://nic.gh/'),
+                        'ug': ('UGENIC', 'https://www.registry.co.ug/')
+                    }
                     
                     col1, col2, col3 = st.columns(3)
+                    
                     with col1:
                         st.markdown(f"[ICANN Lookup](https://lookup.icann.org/en/lookup?name={domain})")
+                    
                     with col2:
                         st.markdown(f"[Who.is](https://who.is/whois/{domain})")
+                    
                     with col3:
-                        if tld == 'za':
-                            st.markdown(f"[COZA Registry](https://www.coza.net.za/)")
-                        elif tld == 'ke':
-                            st.markdown(f"[KENIC](https://www.kenic.or.ke/)")
+                        if second_level_tld and second_level_tld in ccTLD_registries:
+                            registry_name, registry_url = ccTLD_registries[second_level_tld]
+                            st.markdown(f"[{registry_name} Registry]({registry_url})")
+                        elif tld in ccTLD_registries:
+                            registry_name, registry_url = ccTLD_registries[tld]
+                            st.markdown(f"[{registry_name} Registry]({registry_url})")
                         else:
                             st.markdown(f"[DomainTools](https://whois.domaintools.com/{domain})")
+                    
+                    # Show raw WHOIS output if available but couldn't parse
+                    if whois_raw:
+                        with st.expander("📄 Raw WHOIS Output (parsing failed)"):
+                            st.text(whois_raw[:2000])
                     
                     warnings.append("WHOIS data unavailable via automated tools")
                 
