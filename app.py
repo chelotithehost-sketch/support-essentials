@@ -419,8 +419,10 @@ if tool == "Domain Check":
                         for key, value in summary.items():
                             st.text(f"{key}: {value}")
                         
-                        # Option to see raw data
-                        if st.checkbox("Show technical/raw data", key="show_raw_whois"):
+                        st.divider()
+                        
+                        # Collapsible raw data section
+                        with st.expander("📄 Show Technical/Raw Data"):
                             st.json(whois_data)
                     
                     success_checks.append("WHOIS lookup successful")
