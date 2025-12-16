@@ -128,59 +128,65 @@ if tool == "Domain Check":
                         
                 except Exception as e:
                     st.warning(f"⚠️ Could not check SOA: {str(e)}")
-                
-                # 4. WHOIS/Registration Status Check (REVISED SECTION)
-                st.subheader("📝 Domain Registration & WHOIS Information")
-                
-                whois_data = {}
-                whois_success = False
-                whois_raw = None
-                
-                tld = domain.split('.')[-1].lower()
-                
-                # Method 1: Use python-whois library (BEST for gTLDs and ccTLDs)
-                try:
-                    # Use the library to get the domain object
-                    domain_info = whois.query(domain, timeout=15)
-                    
-                    if domain_info:
-                        whois_success = True
-                        
-                        # Populate a standard dictionary from the whois object
-                        whois_data = {
-                            'domain': domain_info.domain_name.rstrip('.').lower() if domain_info.domain_name else None,
-                            'registrar': domain_info.registrar,
-                            'created': domain_info.creation_date,
-                            'expires': domain_info.expiration_date,
-                            'updated': domain_info.last_updated,
-                            'nameservers': [ns.rstrip('.').lower() for ns in domain_info.name_servers] if domain_info.name_servers else [],
-                            'status': domain_info.statuses if domain_info.statuses else [],
-                            # The library returns the raw data on the internal object
-                            'raw_text': domain_info.text if hasattr(domain_info, 'text') else 'N/A' 
-                        }
-                        
-                        # Registrant Info (often redacted now, but try)
-                        if domain_info.registrant_name and 'redacted' not in domain_info.registrant_name.lower():
-                            whois_data['registrant'] = domain_info.registrant_name
-                        elif domain_info.registrant_organization and 'redacted' not in domain_info.registrant_organization.lower():
-                            whois_data['registrant'] = domain_info.registrant_organization
-                        
-                    whois_raw = whois_data.get('raw_text', None)
-                        
-                except whois.exceptions.FailedParsing as e:
-                    # Occurs when whois server is reached but output format is unexpected
-                    st.warning(f"⚠️ WHOIS parsing failed for {tld} (Raw data returned): {str(e)}")
-                    # The raw output might be embedded in the exception or available from the internal query object
-                    whois_raw = str(e) # Best effort to capture raw data
-                    whois_data = {}
-                    
-                except Exception as whois_error:
-                    # Generic library error (timeout, connection refused, etc.)
-                    st.warning(f"⚠️ WHOIS library error (moving to APIs): {str(whois_error)}")
-                    pass
-                
-                # Method 2: Try APIs if library failed (UNCHANGED, but only runs if Method 1 failed)
-                if not whois_success:
+                # 4. WHOIS/Registration Status Check (REVISED SECTION FOR ATTRIBUTE SAFETY)
+st.subheader("📝 Domain Registration & WHOIS Information")
+
+whois_data = {}
+whois_success = False
+whois_raw = None
+tld = domain.split('.')[-1].lower()
+
+# Method 1: Use python-whois library (BEST for gTLDs and ccTLDs)
+try:
+    # Use the library to get the domain object
+    domain_info = whois.query(domain, timeout=15)
+    
+    if domain_info:
+        whois_success = True
+        
+        # Populate a standard dictionary from the whois object - DEFENSIVE ACCESS
+        # Using getattr() ensures that if an attribute is missing (e.g., 'registrar'), 
+        # it defaults cleanly to None or [] instead of crashing.
+        whois_data = {
+            'domain': getattr(domain_info, 'domain_name', domain).rstrip('.').lower(),
+            'registrar': getattr(domain_info, 'registrar', None),
+            'created': getattr(domain_info, 'creation_date', None),
+            'expires': getattr(domain_info, 'expiration_date', None),
+            'updated': getattr(domain_info, 'last_updated', None),
+            
+            # Ensure nameservers is a list of strings
+            'nameservers': [ns.rstrip('.').lower() for ns in getattr(domain_info, 'name_servers', [])] if getattr(domain_info, 'name_servers', []) else [],
+            
+            'status': getattr(domain_info, 'statuses', []),
+            'raw_text': getattr(domain_info, 'text', 'N/A')
+        }
+        
+        whois_raw = whois_data['raw_text']
+        
+        # Registrant Info (often redacted now, but try)
+        reg_name = getattr(domain_info, 'registrant_name', None)
+        reg_org = getattr(domain_info, 'registrant_organization', None)
+        
+        if reg_name and 'redacted' not in str(reg_name).lower():
+            whois_data['registrant'] = reg_name
+        elif reg_org and 'redacted' not in str(reg_org).lower():
+            whois_data['registrant'] = reg_org
+        
+except whois.exceptions.FailedParsing as e:
+    # Occurs when whois server is reached but output format is unexpected
+    st.warning(f"⚠️ WHOIS parsing failed for {tld} (Raw data returned): {str(e)}")
+    # Attempt to capture raw data if possible
+    whois_raw = str(e)
+    whois_data = {}
+    
+except Exception as whois_error:
+    # Catches the generic AttributeError, Timeout, ConnectionError, etc.
+    st.warning(f"⚠️ WHOIS library failed (moving to APIs): {type(whois_error).__name__}: {str(whois_error)}")
+    pass
+
+# Method 2: Try APIs if library failed (starts here)
+if not whois_success:
+# ... (the rest of the code remains the same from here)
                     whois_apis = [
                         {
                             'name': 'RDAP',
