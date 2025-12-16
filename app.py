@@ -140,15 +140,36 @@ if tool == "Domain Check":
                 
                 # Method 1: Try system WHOIS command (best for ccTLDs)
                 try:
-                    # Some ccTLDs need specific WHOIS servers
+                    # Comprehensive WHOIS server mapping
                     whois_servers = {
+                        # African ccTLDs
                         'za': 'whois.registry.net.za',
                         'co.za': 'whois.registry.net.za',
+                        'org.za': 'whois.registry.net.za',
+                        'net.za': 'whois.registry.net.za',
                         'ng': 'whois.nic.net.ng',
+                        'com.ng': 'whois.nic.net.ng',
                         'ke': 'whois.kenic.or.ke',
+                        'co.ke': 'whois.kenic.or.ke',
                         'tz': 'whois.tznic.or.tz',
+                        'co.tz': 'whois.tznic.or.tz',
                         'gh': 'whois.nic.gh',
-                        'ug': 'whois.co.ug'
+                        'com.gh': 'whois.nic.gh',
+                        'ug': 'whois.co.ug',
+                        'co.ug': 'whois.co.ug',
+                        'rw': 'whois.ricta.org.rw',
+                        'zw': 'whois.zispa.co.zw',
+                        'et': 'whois.ethiotelecom.et',
+                        'zm': 'whois.zicta.zm',
+                        'ma': 'whois.registre.ma',
+                        # Global TLDs
+                        'us': 'whois.nic.us',
+                        'eu': 'whois.eu',
+                        'uk': 'whois.nic.uk',
+                        'co.uk': 'whois.nic.uk',
+                        'ca': 'whois.cira.ca',
+                        'cn': 'whois.cnnic.cn',
+                        'com.cn': 'whois.cnnic.cn'
                     }
                     
                     # Determine which server to use
@@ -476,13 +497,33 @@ if tool == "Domain Check":
                     
                     # ccTLD-specific WHOIS links
                     ccTLD_registries = {
+                        # African ccTLDs
                         'za': ('ZACR', 'https://www.registry.net.za/'),
                         'co.za': ('ZACR', 'https://www.registry.net.za/'),
+                        'org.za': ('ZACR', 'https://www.registry.net.za/'),
+                        'net.za': ('ZACR', 'https://www.registry.net.za/'),
                         'ng': ('NiRA', 'https://www.nira.org.ng/'),
+                        'com.ng': ('NiRA', 'https://www.nira.org.ng/'),
                         'ke': ('KENIC', 'https://www.kenic.or.ke/'),
+                        'co.ke': ('KENIC', 'https://www.kenic.or.ke/'),
                         'tz': ('tzNIC', 'https://www.tznic.or.tz/'),
+                        'co.tz': ('tzNIC', 'https://www.tznic.or.tz/'),
                         'gh': ('NIC Ghana', 'https://nic.gh/'),
-                        'ug': ('UGENIC', 'https://www.registry.co.ug/')
+                        'com.gh': ('NIC Ghana', 'https://nic.gh/'),
+                        'ug': ('UGENIC', 'https://www.registry.co.ug/'),
+                        'co.ug': ('UGENIC', 'https://www.registry.co.ug/'),
+                        'rw': ('RICTA', 'https://www.ricta.org.rw/'),
+                        'zw': ('ZISPA', 'https://www.zispa.co.zw/'),
+                        'et': ('Ethio Telecom', 'https://www.ethiotelecom.et/'),
+                        'zm': ('ZICTA', 'https://www.zicta.zm/'),
+                        'ma': ('ANRT Morocco', 'https://www.registre.ma/'),
+                        # Global TLDs
+                        'us': ('Neustar', 'https://www.nic.us/'),
+                        'eu': ('EURid', 'https://eurid.eu/'),
+                        'uk': ('Nominet UK', 'https://www.nominet.uk/'),
+                        'co.uk': ('Nominet UK', 'https://www.nominet.uk/'),
+                        'ca': ('CIRA', 'https://cira.ca/'),
+                        'cn': ('CNNIC', 'https://www.cnnic.cn/')
                     }
                     
                     col1, col2, col3 = st.columns(3)
@@ -998,7 +1039,7 @@ elif tool == "SSL Check":
             
             with st.spinner(f"Analyzing SSL certificate for {domain}..."):
                 try:
-                    # Method 1: Try to get certificate directly via Python SSL
+                    # Get certificate via Python SSL
                     context = ssl.create_default_context()
                     with socket.create_connection((domain, 443), timeout=10) as sock:
                         with context.wrap_socket(sock, server_hostname=domain) as secure_sock:
@@ -1006,7 +1047,7 @@ elif tool == "SSL Check":
                             
                             st.success(f"✅ SSL Certificate found and valid for {domain}")
                             
-                            # Parse certificate data
+                            # Parse certificate data cleanly
                             col1, col2 = st.columns(2)
                             
                             with col1:
@@ -1050,14 +1091,35 @@ elif tool == "SSL Check":
                             if 'subjectAltName' in cert:
                                 st.subheader("🌐 Subject Alternative Names")
                                 sans = [san[1] for san in cert['subjectAltName']]
-                                for san in sans[:10]:  # Show first 10
+                                
+                                # Show first 10 SANs
+                                for san in sans[:10]:
                                     st.code(san)
+                                
                                 if len(sans) > 10:
-                                    st.info(f"...and {len(sans) - 10} more domains")
+                                    st.info(f"...and {len(sans) - 10} more domain(s)")
                             
-                            # Certificate details in expander
-                            with st.expander("🔍 View Full Certificate Details"):
-                                st.json(cert)
+                            # Certificate summary in expander
+                            with st.expander("🔍 View Certificate Summary"):
+                                summary = {
+                                    'Common Name': subject.get('commonName', 'N/A'),
+                                    'Issuer': issuer.get('commonName', 'N/A'),
+                                    'Issuer Organization': issuer.get('organizationName', 'N/A'),
+                                    'Valid From': not_before,
+                                    'Valid Until': not_after,
+                                    'Serial Number': cert.get('serialNumber', 'N/A'),
+                                    'Version': cert.get('version', 'N/A'),
+                                    'Total SANs': len(sans) if 'subjectAltName' in cert else 0
+                                }
+                                
+                                for key, value in summary.items():
+                                    st.text(f"{key}: {value}")
+                                
+                                st.divider()
+                                
+                                # Technical details in nested expander
+                                with st.expander("📄 Show Technical/Raw Certificate Data"):
+                                    st.json(cert)
                                 
                 except socket.gaierror:
                     st.error(f"❌ Could not resolve domain: {domain}")
