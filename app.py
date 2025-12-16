@@ -373,12 +373,54 @@ if tool == "Domain Check":
                                 ns_clean = str(ns).lower().rstrip('.')
                                 st.caption(f"• {ns_clean}")
                     
-                    # Raw WHOIS data
-                    if whois_raw:
-                        with st.expander("📄 View Raw WHOIS Output"):
-                            st.text(whois_raw[:3000])  # First 3000 chars
-                    else:
-                        with st.expander("🔍 View WHOIS Data"):
+                    # Clean WHOIS summary
+                    with st.expander("🔍 View WHOIS Summary"):
+                        summary = {}
+                        
+                        # Extract only useful information
+                        if whois_data.get('domain') or whois_data.get('ldhName'):
+                            summary['Domain'] = whois_data.get('domain') or whois_data.get('ldhName')
+                        
+                        if whois_data.get('handle'):
+                            summary['Registry Handle'] = whois_data['handle']
+                        
+                        if whois_data.get('registrar'):
+                            summary['Registrar'] = whois_data['registrar']
+                        
+                        # Status
+                        if whois_data.get('status'):
+                            summary['Status'] = ', '.join(whois_data['status']) if isinstance(whois_data['status'], list) else whois_data['status']
+                        
+                        # Dates
+                        if created_date:
+                            summary['Created'] = str(created_date).split('T')[0]
+                        if expires_date:
+                            summary['Expires'] = str(expires_date).split('T')[0]
+                        if updated_date:
+                            summary['Updated'] = str(updated_date).split('T')[0]
+                        
+                        # Nameservers
+                        if nameservers:
+                            summary['Nameservers'] = ', '.join(nameservers[:3])
+                        
+                        # Registrant (if not redacted)
+                        if whois_data.get('registrant') and 'redacted' not in str(whois_data['registrant']).lower():
+                            summary['Registrant'] = whois_data['registrant']
+                        
+                        # DNSSEC
+                        if whois_data.get('secureDNS'):
+                            dnssec = whois_data['secureDNS']
+                            if dnssec.get('delegationSigned'):
+                                summary['DNSSEC'] = 'Signed (Enabled)'
+                            else:
+                                summary['DNSSEC'] = 'Not Signed (Disabled)'
+                        
+                        # Display as clean table
+                        for key, value in summary.items():
+                            st.text(f"{key}: {value}")
+                        
+                        # Option to see raw data
+                        if st.checkbox("Show technical/raw data", key="show_raw_whois"):
                             st.json(whois_data)
                     
                     success_checks.append("WHOIS lookup successful")
