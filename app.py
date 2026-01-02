@@ -37,7 +37,33 @@ import time
 
 # 1. Vision-capable models for ticket analysis
 GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite-preview", "gemini-robotics-er-1.5-preview"]
+def analyze_ticket_with_rotation(prompt, image_file):
+    """
+    Tries each model in GEMINI_MODELS until one succeeds or all fail.
+    Replaces manual rate limit tracking.
+    """
+    for model_name in GEMINI_MODELS:
+        try:
+            # Initialize model
+            model = genai.GenerativeModel(model_name)
+            
+            # Attempt analysis (passing both prompt and image)
+            response = model.generate_content([prompt, image_file])
+            
+            # If successful, return the result and the model that worked
+            return response.text, model_name
 
+        except exceptions.ResourceExhausted:
+            # This is the 'Rate Limit' error. If caught, we try the next model in the list.
+            st.warning(f"⚠️ {model_name} rate limit reached. Switching to next model...")
+            continue 
+
+        except Exception as e:
+            # Handle other errors (like invalid API key or network issues)
+            st.error(f"❌ Error with {model_name}: {str(e)}")
+            continue
+
+    return None, None
 # [Keep all your existing imports and configuration code here]
 # [Keep GEMINI_API_KEY, GEMINI_MODELS, HOSTAFRICA_KB, etc.]
 
