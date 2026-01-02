@@ -125,7 +125,175 @@ HostAfrica Nameservers:
     return "I'm currently unavailable. Please try again in a moment.", None
 
 # --- MODIFY YOUR SIDEBAR TO ADD CHAT FEATURE ---
+def search_kb_articles(keywords):
+    """Search KB for relevant articles"""
+    articles = []
+    keywords_lower = keywords.lower()
+    for category, items in HOSTAFRICA_KB.items():
+        for item in items:
+            if any(k in keywords_lower for k in item['keywords']):
+                if item not in articles:
+                    articles.append(item)
+    return articles[:3]
 
+def image_to_base64(image_file):
+    """Convert uploaded image to base64"""
+    try:
+        image = Image.open(image_file)
+        max_size = 1024
+        if max(image.size) > max_size:
+            image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        
+        if image.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            background.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
+            image = background
+        
+        buffer = io.BytesIO()
+        image.save(buffer, format='JPEG', quality=85)
+        return base64.b64encode(buffer.getvalue()).decode()
+    except Exception as e:
+        st.error(f"Error processing image: {str(e)}")
+        return None
+
+def analyze_ticket_with_rotation(prompt, image_data):
+    """Try models in rotation until one succeeds"""
+    for model_name in GEMINI_MODELS:
+        try:
+            import google.generativeai as genai
+            model = genai.GenerativeModel(model_name)
+            
+            content = [prompt, {"mime_type": "image/jpeg", "data": image_data}] if image_data else prompt
+            response = model.generate_content(content)
+            
+            return response.text, model_name
+            
+        except Exception as e:
+            error_str = str(e)
+            if "429" in error_str or "ResourceExhausted" in error_str or "rate" in error_str.lower():
+                continue
+            else:
+                st.warning(f"Model {model_name} error: {error_str[:50]}")
+                continue
+    
+    return None, None
+
+def analyze_ticket_with_ai(ticket_text, image_data=None):
+    """Analyze ticket with AI (with optional image)"""
+    if not GEMINI_API_KEY:
+        return analyze_ticket_keywords(ticket_text)
+    
+    try:
+        prompt = f"""Analyze this HostAfrica support ticket{"and screenshot" if image_data else ""}.
+
+HostAfrica: web hosting (cPanel/DirectAdmin), domains, email, SSL, VPS
+NS: cPanel (ns1-4.host-ww.net), DirectAdmin (dan1-2.host-ww.net)
+
+Ticket: {ticket_text}
+
+{"IMPORTANT: Analyze the screenshot for error messages, warnings, or visual clues." if image_data else ""}
+
+JSON format:
+{{
+    "issue_type": "Specific issue",
+    "checks": ["check1", "check2"],
+    "actions": ["action1", "action2"],
+    "response_template": "Professional response",
+    "kb_topics": ["topic1"],
+    "screenshot_analysis": "What the screenshot shows and how it helps diagnose"
+}}"""
+
+        result_text, model_used = analyze_ticket_with_rotation(prompt, image_data)
+        
+        if result_text:
+            text = result_text.strip().replace("```json", "").replace("```", "").strip()
+            result = json.loads(text)
+            result['kb_articles'] = search_kb_articles(ticket_text)
+            if model_used:
+                st.caption(f"💡 Analyzed using: {model_used}")
+            return result
+        else:
+            st.warning("⚠️ All AI models busy, using keyword analysis")
+            return analyze_ticket_keywords(ticket_text)
+        
+    except Exception as e:
+        st.warning(f"AI unavailable: {str(e)[:100]}")
+        return analyze_ticket_keywords(ticket_text)
+
+def analyze_ticket_keywords(ticket_text):
+    """Keyword-based analysis"""
+    ticket_lower = ticket_text.lower()
+    result = {
+        'issue_type': 'General Support',
+        'checks': [],
+        'actions': [],
+        'response_template': '',
+        'kb_articles': [],
+        'screenshot_analysis': None
+    }
+    
+    if any(w in ticket_lower for w in ['cpanel', 'login', 'recaptcha', 'captcha', 'access']):
+        result['issue_type'] = '🔐 cPanel Access Issue'
+        result['checks'] = ['Check if client IP is blocked', 'Verify hosting account is active', 'Check for failed login attempts']
+        result['actions'] = ['Use IP Unban tool', 'Check client IP with IP Lookup', 'Clear browser cache']
+        
+        ip_match = re.search(r'IP Address:\s*(\d+\.\d+\.\d+\.\d+)', ticket_text)
+        client_ip = ip_match.group(1) if ip_match else 'client IP'
+        
+        result['response_template'] = f"""Hi there,
+
+Thank you for contacting HostAfrica Support regarding your cPanel login issue.
+
+I can see you're having trouble with the reCAPTCHA verification. This is usually caused by IP address blocking.
+
+**Your IP**: {client_ip}
+
+**I've taken these steps:**
+- Checked your account status: Active
+- Reviewed IP blocks on the server
+- Removed your IP from the block list
+
+**Please try these steps:**
+1. Clear your browser cache and cookies
+2. Try accessing cPanel in incognito/private window
+3. If issue persists, try a different browser
+4. Wait 15-30 minutes after multiple failed attempts
+
+For help: https://help.hostafrica.com/en/category/web-hosting-b01r28/
+
+Best regards,
+[Your Name]
+HostAfrica Support Team"""
+        result['kb_articles'] = search_kb_articles('cpanel login')
+    
+    elif any(w in ticket_lower for w in ['email', 'mail', 'smtp', 'imap']):
+        result['issue_type'] = '📧 Email Issue'
+        result['checks'] = ['Check MX records', 'Verify SPF/DKIM']
+        result['actions'] = ['Use DNS tool', 'Check IP blocks']
+        result['response_template'] = "Hi [Client],\n\nThank you for contacting HostAfrica about your email issue.\n\nI've checked:\n- MX records\n- Email authentication\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/email-1fmw9ki/\n\nBest regards,\nHostAfrica Support"
+        result['kb_articles'] = search_kb_articles('email')
+    
+    elif any(w in ticket_lower for w in ['website', 'site', '404', '500']):
+        result['issue_type'] = '🌐 Website Issue'
+        result['checks'] = ['Check A record', 'Verify nameservers']
+        result['actions'] = ['Use DNS tool', 'Check WHOIS']
+        result['response_template'] = "Hi [Client],\n\nI've investigated your website issue.\n\nStatus:\n- Domain: [Status]\n- DNS: [Status]\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/web-hosting-b01r28/\n\nBest regards,\nHostAfrica Support"
+        result['kb_articles'] = search_kb_articles('website')
+    
+    elif any(w in ticket_lower for w in ['ssl', 'https', 'certificate']):
+        result['issue_type'] = '🔒 SSL Certificate Issue'
+        result['checks'] = ['Check SSL certificate', 'Verify expiration']
+        result['actions'] = ['Use SSL Check tool', 'Install Let\'s Encrypt']
+        result['response_template'] = "Hi [Client],\n\nI've reviewed your SSL certificate.\n\nStatus:\n- Certificate: [Status]\n- Expiration: [Date]\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/ssl-certificates-1n94vbj/\n\nBest regards,\nHostAfrica Support"
+        result['kb_articles'] = search_kb_articles('ssl')
+    
+    else:
+        result['checks'] = ['Verify identity', 'Check service status']
+        result['actions'] = ['Request more details']
+        result['response_template'] = "Hi [Client],\n\nThank you for contacting HostAfrica Support.\n\nTo assist better, I need more information:\n[Questions]\n\nVisit: https://help.hostafrica.com/\n\nBest regards,\nHostAfrica Support"
+    
+    return result
+    
 st.sidebar.title("🎫 Ticket Analyzer")
 
 # Create tabs for different features
@@ -350,174 +518,6 @@ HOSTAFRICA_KB = {
     ],
 }
 
-def search_kb_articles(keywords):
-    """Search KB for relevant articles"""
-    articles = []
-    keywords_lower = keywords.lower()
-    for category, items in HOSTAFRICA_KB.items():
-        for item in items:
-            if any(k in keywords_lower for k in item['keywords']):
-                if item not in articles:
-                    articles.append(item)
-    return articles[:3]
-
-def image_to_base64(image_file):
-    """Convert uploaded image to base64"""
-    try:
-        image = Image.open(image_file)
-        max_size = 1024
-        if max(image.size) > max_size:
-            image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
-        if image.mode in ('RGBA', 'LA', 'P'):
-            background = Image.new('RGB', image.size, (255, 255, 255))
-            background.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
-            image = background
-        
-        buffer = io.BytesIO()
-        image.save(buffer, format='JPEG', quality=85)
-        return base64.b64encode(buffer.getvalue()).decode()
-    except Exception as e:
-        st.error(f"Error processing image: {str(e)}")
-        return None
-
-def analyze_ticket_with_rotation(prompt, image_data):
-    """Try models in rotation until one succeeds"""
-    for model_name in GEMINI_MODELS:
-        try:
-            import google.generativeai as genai
-            model = genai.GenerativeModel(model_name)
-            
-            content = [prompt, {"mime_type": "image/jpeg", "data": image_data}] if image_data else prompt
-            response = model.generate_content(content)
-            
-            return response.text, model_name
-            
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "ResourceExhausted" in error_str or "rate" in error_str.lower():
-                continue
-            else:
-                st.warning(f"Model {model_name} error: {error_str[:50]}")
-                continue
-    
-    return None, None
-
-def analyze_ticket_with_ai(ticket_text, image_data=None):
-    """Analyze ticket with AI (with optional image)"""
-    if not GEMINI_API_KEY:
-        return analyze_ticket_keywords(ticket_text)
-    
-    try:
-        prompt = f"""Analyze this HostAfrica support ticket{"and screenshot" if image_data else ""}.
-
-HostAfrica: web hosting (cPanel/DirectAdmin), domains, email, SSL, VPS
-NS: cPanel (ns1-4.host-ww.net), DirectAdmin (dan1-2.host-ww.net)
-
-Ticket: {ticket_text}
-
-{"IMPORTANT: Analyze the screenshot for error messages, warnings, or visual clues." if image_data else ""}
-
-JSON format:
-{{
-    "issue_type": "Specific issue",
-    "checks": ["check1", "check2"],
-    "actions": ["action1", "action2"],
-    "response_template": "Professional response",
-    "kb_topics": ["topic1"],
-    "screenshot_analysis": "What the screenshot shows and how it helps diagnose"
-}}"""
-
-        result_text, model_used = analyze_ticket_with_rotation(prompt, image_data)
-        
-        if result_text:
-            text = result_text.strip().replace("```json", "").replace("```", "").strip()
-            result = json.loads(text)
-            result['kb_articles'] = search_kb_articles(ticket_text)
-            if model_used:
-                st.caption(f"💡 Analyzed using: {model_used}")
-            return result
-        else:
-            st.warning("⚠️ All AI models busy, using keyword analysis")
-            return analyze_ticket_keywords(ticket_text)
-        
-    except Exception as e:
-        st.warning(f"AI unavailable: {str(e)[:100]}")
-        return analyze_ticket_keywords(ticket_text)
-
-def analyze_ticket_keywords(ticket_text):
-    """Keyword-based analysis"""
-    ticket_lower = ticket_text.lower()
-    result = {
-        'issue_type': 'General Support',
-        'checks': [],
-        'actions': [],
-        'response_template': '',
-        'kb_articles': [],
-        'screenshot_analysis': None
-    }
-    
-    if any(w in ticket_lower for w in ['cpanel', 'login', 'recaptcha', 'captcha', 'access']):
-        result['issue_type'] = '🔐 cPanel Access Issue'
-        result['checks'] = ['Check if client IP is blocked', 'Verify hosting account is active', 'Check for failed login attempts']
-        result['actions'] = ['Use IP Unban tool', 'Check client IP with IP Lookup', 'Clear browser cache']
-        
-        ip_match = re.search(r'IP Address:\s*(\d+\.\d+\.\d+\.\d+)', ticket_text)
-        client_ip = ip_match.group(1) if ip_match else 'client IP'
-        
-        result['response_template'] = f"""Hi there,
-
-Thank you for contacting HostAfrica Support regarding your cPanel login issue.
-
-I can see you're having trouble with the reCAPTCHA verification. This is usually caused by IP address blocking.
-
-**Your IP**: {client_ip}
-
-**I've taken these steps:**
-- Checked your account status: Active
-- Reviewed IP blocks on the server
-- Removed your IP from the block list
-
-**Please try these steps:**
-1. Clear your browser cache and cookies
-2. Try accessing cPanel in incognito/private window
-3. If issue persists, try a different browser
-4. Wait 15-30 minutes after multiple failed attempts
-
-For help: https://help.hostafrica.com/en/category/web-hosting-b01r28/
-
-Best regards,
-[Your Name]
-HostAfrica Support Team"""
-        result['kb_articles'] = search_kb_articles('cpanel login')
-    
-    elif any(w in ticket_lower for w in ['email', 'mail', 'smtp', 'imap']):
-        result['issue_type'] = '📧 Email Issue'
-        result['checks'] = ['Check MX records', 'Verify SPF/DKIM']
-        result['actions'] = ['Use DNS tool', 'Check IP blocks']
-        result['response_template'] = "Hi [Client],\n\nThank you for contacting HostAfrica about your email issue.\n\nI've checked:\n- MX records\n- Email authentication\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/email-1fmw9ki/\n\nBest regards,\nHostAfrica Support"
-        result['kb_articles'] = search_kb_articles('email')
-    
-    elif any(w in ticket_lower for w in ['website', 'site', '404', '500']):
-        result['issue_type'] = '🌐 Website Issue'
-        result['checks'] = ['Check A record', 'Verify nameservers']
-        result['actions'] = ['Use DNS tool', 'Check WHOIS']
-        result['response_template'] = "Hi [Client],\n\nI've investigated your website issue.\n\nStatus:\n- Domain: [Status]\n- DNS: [Status]\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/web-hosting-b01r28/\n\nBest regards,\nHostAfrica Support"
-        result['kb_articles'] = search_kb_articles('website')
-    
-    elif any(w in ticket_lower for w in ['ssl', 'https', 'certificate']):
-        result['issue_type'] = '🔒 SSL Certificate Issue'
-        result['checks'] = ['Check SSL certificate', 'Verify expiration']
-        result['actions'] = ['Use SSL Check tool', 'Install Let\'s Encrypt']
-        result['response_template'] = "Hi [Client],\n\nI've reviewed your SSL certificate.\n\nStatus:\n- Certificate: [Status]\n- Expiration: [Date]\n\n[Action taken]\n\nFor help: https://help.hostafrica.com/en/category/ssl-certificates-1n94vbj/\n\nBest regards,\nHostAfrica Support"
-        result['kb_articles'] = search_kb_articles('ssl')
-    
-    else:
-        result['checks'] = ['Verify identity', 'Check service status']
-        result['actions'] = ['Request more details']
-        result['response_template'] = "Hi [Client],\n\nThank you for contacting HostAfrica Support.\n\nTo assist better, I need more information:\n[Questions]\n\nVisit: https://help.hostafrica.com/\n\nBest regards,\nHostAfrica Support"
-    
-    return result
 
 # SIDEBAR
 st.sidebar.divider()
