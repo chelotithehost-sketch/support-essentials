@@ -152,11 +152,6 @@ with analysis_tab:
         type=['png', 'jpg', 'jpeg', 'gif'],
         help="Upload error screenshots or interface issues",
         key="ticket_image"
-    )uploaded_image = st.file_uploader(
-        "📎 Upload Screenshot (optional)",
-        type=['png', 'jpg', 'jpeg', 'gif'],
-        help="Upload error screenshots or interface issues",
-        key="ticket_image"
     )
     
     if uploaded_image:
