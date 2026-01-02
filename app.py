@@ -118,7 +118,7 @@ with analysis_tab:
         "Ticket conversation:",
         height=150,
         placeholder="Paste ticket thread here...",
-        key="ticket_input"
+        key="ticket_input_analysis"
     )
     
     uploaded_image = st.file_uploader(
@@ -511,7 +511,7 @@ with st.sidebar.expander("🤖 AI Analysis + Screenshots", expanded=False):
         "Ticket conversation:",
         height=150,
         placeholder="Paste ticket thread here...",
-        key="ticket_input"
+        key="ticket_input_sidebar"
     )
     
     uploaded_image = st.file_uploader(
