@@ -144,10 +144,15 @@ with analysis_tab:
         "Ticket conversation:",
         height=150,
         placeholder="Paste ticket thread here...",
-        key="ticket_input_analysis"
+        key="ticket_input"
     )
     
     uploaded_image = st.file_uploader(
+        "📎 Upload Screenshot (optional)",
+        type=['png', 'jpg', 'jpeg', 'gif'],
+        help="Upload error screenshots or interface issues",
+        key="ticket_image"
+    )uploaded_image = st.file_uploader(
         "📎 Upload Screenshot (optional)",
         type=['png', 'jpg', 'jpeg', 'gif'],
         help="Upload error screenshots or interface issues",
@@ -160,15 +165,18 @@ with analysis_tab:
     
     if st.button("🔍 Analyze Ticket", key="analyze_btn", use_container_width=True):
         if ticket_thread:
-            with st.spinner("Analyzing..."):
+            with st.spinner("Analyzing" + (" with screenshot" if uploaded_image else "") + "..."):
                 image_base64 = None
                 if uploaded_image and GEMINI_API_KEY:
                     image_base64 = image_to_base64(uploaded_image)
+                    if not image_base64:
+                        st.warning("⚠️ Image failed, analyzing text only")
                 
                 analysis = analyze_ticket_with_ai(ticket_thread, image_base64)
                 
                 if analysis:
                     st.success("✅ Analysis Complete")
+                    
                     st.markdown("**Issue Type:**")
                     st.info(analysis.get('issue_type', 'General'))
                     
@@ -193,12 +201,8 @@ with analysis_tab:
                     with st.expander("📝 Response Template"):
                         resp = analysis.get('response_template', '')
                         st.text_area("Copy:", value=resp, height=300, key="resp")
-                    
-                    # Store ticket for chat context
-                    st.session_state.ticket_for_chat = ticket_thread
         else:
             st.warning("Paste ticket first")
-
 with chat_tab:
     st.markdown("""
     **💬 Ask AI about the ticket**
