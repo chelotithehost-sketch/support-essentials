@@ -265,8 +265,6 @@ HOSTAFRICA_KB = {
          'keywords': ['google', 'submit', 'index', 'search']},
     ],
     'errors': [
-        {'title': 'This Site Can\'t Be Reached', 'url': 'https://help.hostafrica.com/article/this-site-can't-be-reached-error',
-         'keywords': ['can\'t be reached', 'connection', 'dns error']},
         {'title': 'PHP Memory Exhausted', 'url': 'https://help.hostafrica.com/article/fixing-the-php-error-allowed-memory-size-of-x-bytes-exhausted',
          'keywords': ['memory', 'php error', 'exhausted']},
         {'title': '.htaccess Redirect', 'url': 'https://help.hostafrica.com/article/how-to-redirect-a-page-to-another-page-or-website-using-htaccess',
