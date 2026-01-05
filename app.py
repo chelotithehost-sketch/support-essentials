@@ -265,6 +265,8 @@ HOSTAFRICA_KB = {
          'keywords': ['google', 'submit', 'index', 'search']},
     ],
     'errors': [
+        {'title': 'This Site Can\'t Be Reached', 'url': 'https://help.hostafrica.com/article/this-site-can't-be-reached-error',
+         'keywords': ['can\'t be reached', 'connection', 'dns error']},
         {'title': 'PHP Memory Exhausted', 'url': 'https://help.hostafrica.com/article/fixing-the-php-error-allowed-memory-size-of-x-bytes-exhausted',
          'keywords': ['memory', 'php error', 'exhausted']},
         {'title': '.htaccess Redirect', 'url': 'https://help.hostafrica.com/article/how-to-redirect-a-page-to-another-page-or-website-using-htaccess',
@@ -575,6 +577,9 @@ with analysis_tab:
                 if analysis:
                     st.success("✅ Analysis Complete")
                     
+                    # Save ticket for chat context
+                    st.session_state.ticket_for_chat = ticket_thread
+                    
                     st.markdown("**Issue Type:**")
                     st.info(analysis.get('issue_type', 'General'))
                     
@@ -599,6 +604,9 @@ with analysis_tab:
                     with st.expander("📝 Response Template"):
                         resp = analysis.get('response_template', '')
                         st.text_area("Copy:", value=resp, height=300, key="resp")
+                    
+                    # Show chat hint
+                    st.info("💬 **Tip:** Switch to the AI Chat tab to ask follow-up questions about this ticket!")
         else:
             st.warning("Paste ticket first")
 with chat_tab:
