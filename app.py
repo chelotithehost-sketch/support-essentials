@@ -1053,9 +1053,9 @@ elif tool == "🌍 WHOIS Lookup":
                     except Exception as e:
                         st.error(f"❌ WHOIS lookup failed: {type(e).__name__}")
                         st.info(f"**Try manual lookup:**\n- https://who.is/whois/{domain}")
-        else:
-            st.warning("⚠️ Please enter a domain name")
-            # Nameservers
+                    else:
+                        st.warning("⚠️ Please enter a domain name")
+                       # Nameservers
                         if w.name_servers:
                             st.markdown("### WHOIS Nameservers")
                             ns_list = w.name_servers if isinstance(w.name_servers, list) else [w.name_servers]
