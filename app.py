@@ -558,51 +558,6 @@ tool = st.sidebar.radio(
     label_visibility="collapsed"
 )
 st.sidebar.markdown("---")
-st.sidebar.title("🎫 Ticket Analyzer")
-
-with st.sidebar.expander("🤖 AI Analysis", expanded=False):
-    st.markdown("Paste ticket for AI-powered analysis")
-    
-    ticket_thread = st.text_area(
-        "Ticket conversation:",
-        height=200,
-        placeholder="Paste the entire ticket thread here...",
-        key="ticket_input"
-    )
-    
-    if st.button("🔍 Analyze Ticket", key="analyze_btn", use_container_width=True):
-        if ticket_thread:
-            with st.spinner("Analyzing ticket..."):
-                analysis = analyze_ticket_with_ai(ticket_thread)
-                
-                if analysis:
-                    st.success("✅ Analysis Complete")
-                    
-                    st.markdown("**Issue Type:**")
-                    st.info(analysis.get('issue_type', 'General'))
-                    
-                    kb = analysis.get('kb_articles', [])
-                    if kb:
-                        st.markdown("**📚 KB Articles:**")
-                        for a in kb:
-                            st.markdown(f"- [{a['title']}]({a['url']})")
-                    
-                    st.markdown("**Suggested Checks:**")
-                    for c in analysis.get('checks', []):
-                        st.markdown(f"- {c}")
-                    
-                    st.markdown("**Recommended Actions:**")
-                    for a in analysis.get('actions', []):
-                        st.markdown(f"- {a}")
-                    
-                    with st.expander("📝 Suggested Response Template"):
-                        resp = analysis.get('response_template', '')
-                        st.text_area("Copy this response:", value=resp, height=300, key="resp")
-        else:
-            st.warning("Please paste a ticket thread first")
-
-st.sidebar.divider()
-
 st.sidebar.markdown("### Quick Links")
 st.sidebar.link_button("📚 Help Center", "https://help.hostafrica.com", use_container_width=True)
 st.sidebar.link_button("🧹 Flush Google DNS", "https://dns.google/cache", use_container_width=True)
