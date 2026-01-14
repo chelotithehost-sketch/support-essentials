@@ -1046,9 +1046,9 @@ elif tool == "🌍 WHOIS Lookup":
                                     pass
                         
                         with st.expander("📄 View Full Raw WHOIS Data"):
-                        st.json(str(w))
+                             st.json(str(w))
                         
-                        st.markdown('</div>', unsafe_allow_html=True)
+                             st.markdown('</div>', unsafe_allow_html=True)
                         
                     except Exception as e:
                         st.error(f"❌ WHOIS lookup failed: {type(e).__name__}")
@@ -1120,7 +1120,7 @@ elif tool == "🔍 IP Address Lookup":
                         try:
                             response = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5)
                             if response.status_code == 200:
-                                geo_data = response.json()
+                               geo_data = response.json()
                         except:
                             pass
                        
