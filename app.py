@@ -1080,17 +1080,17 @@ elif tool == "🌍 WHOIS Lookup":
                         else:
                             if issues:
                                 st.markdown("**❌ Critical Issues:**")
-                                for issue in issues:
+                            for issue in issues:
                                 st.error(f"• {issue}")
                            
                             if warnings:
                                 st.markdown("**⚠️ Warnings:**")
-                                for warning in warnings:
+                            for warning in warnings:
                                 st.warning(f"• {warning}")
                            
                             if success_checks:
                                 st.markdown("**✅ Passed Checks:**")
-                                for check in success_checks:
+                            for check in success_checks:
                                 st.success(f"• {check}")
                        
                                 st.markdown('</div>', unsafe_allow_html=True)
