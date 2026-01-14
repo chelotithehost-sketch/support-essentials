@@ -1093,8 +1093,8 @@ elif tool == "🌍 WHOIS Lookup":
                                 for check in success_checks:
                                     st.success(f"• {check}")
                        
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    except Exception as e:
+                               st.markdown('</div>', unsafe_allow_html=True)
+        except Exception as e:
                         st.error(f"❌ WHOIS lookup failed: {type(e).__name__}")
                         st.warning("Some domains (especially ccTLDs) may not return complete WHOIS data via automated tools.")
                         st.info(f"**Try manual lookup:**\n- https://who.is/whois/{domain}\n- https://lookup.icann.org/en/lookup?name={domain}")
