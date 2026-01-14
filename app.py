@@ -1091,7 +1091,7 @@ elif tool == "🌍 WHOIS Lookup":
                             if success_checks:
                                 st.markdown("**✅ Passed Checks:**")
                                 for check in success_checks:
-                                    st.success(f"• {check}")
+                                st.success(f"• {check}")
                        
                                st.markdown('</div>', unsafe_allow_html=True)
         except Exception as e:
