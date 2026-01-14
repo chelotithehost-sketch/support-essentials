@@ -1046,7 +1046,7 @@ elif tool == "🌍 WHOIS Lookup":
                                     pass
                         
                         with st.expander("📄 View Full Raw WHOIS Data"):
-                            st.json(str(w))
+                        st.json(str(w))
                         
                         st.markdown('</div>', unsafe_allow_html=True)
                         
@@ -1069,7 +1069,7 @@ elif tool == "🌍 WHOIS Lookup":
                        
                         # Full WHOIS data
                         with st.expander("📄 View Full Raw WHOIS Data"):
-                            st.json(str(w))
+                             st.json(str(w))
                        
                         # Summary
                         st.divider()
@@ -1081,19 +1081,19 @@ elif tool == "🌍 WHOIS Lookup":
                             if issues:
                                 st.markdown("**❌ Critical Issues:**")
                                 for issue in issues:
-                                    st.error(f"• {issue}")
+                                st.error(f"• {issue}")
                            
                             if warnings:
                                 st.markdown("**⚠️ Warnings:**")
                                 for warning in warnings:
-                                    st.warning(f"• {warning}")
+                                st.warning(f"• {warning}")
                            
                             if success_checks:
                                 st.markdown("**✅ Passed Checks:**")
                                 for check in success_checks:
                                 st.success(f"• {check}")
                        
-                               st.markdown('</div>', unsafe_allow_html=True)
+                                st.markdown('</div>', unsafe_allow_html=True)
         except Exception as e:
                         st.error(f"❌ WHOIS lookup failed: {type(e).__name__}")
                         st.warning("Some domains (especially ccTLDs) may not return complete WHOIS data via automated tools.")
