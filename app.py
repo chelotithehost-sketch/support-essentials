@@ -2288,84 +2288,31 @@ elif tool == "🔐 File Permission Checker":
 
 # UTILITIES
 elif tool == "📚 Help Center":
-    st.title("📚 Help Center")
-    st.markdown("Quick access to common help topics")
-    
-    search = st.text_input("🔍 Search:", placeholder="email setup, dns, cpanel...")
-    
-    if search:
-        st.info(f"Searching for: {search}")
-    
-    st.markdown("### 📂 Popular Categories")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("📧 Email Setup", use_container_width=True):
-            st.markdown("""
-            **Email Setup Guide:**
-            1. Log into cPanel
-            2. Go to Email Accounts
-            3. Create new account
-            4. Configure email client:
-               - IMAP: mail.yourdomain.com:993
-               - SMTP: mail.yourdomain.com:465
-            """)
-    
-    with col2:
-        if st.button("🌐 Domain Setup", use_container_width=True):
-            st.markdown("""
-            **Domain Setup:**
-            1. Point nameservers to hosting
-            2. Wait for DNS propagation (24-48 hours)
-            3. Add domain in cPanel
-            4. Upload files to public_html
-            """)
-    
-    with col3:
-        if st.button("🗄️ Database Setup", use_container_width=True):
-            st.markdown("""
-            **Database Setup:**
-            1. Create database in cPanel
-            2. Create database user
-            3. Add user to database
-            4. Note credentials for app config
-            """)
-    
+    st.title("📚 HostAfrica Knowledge Base")
+    st.markdown("Search for guides and documentation")
+   
+    search_query = st.text_input(
+        "Search knowledge base:",
+        placeholder="e.g., email setup, dns, cpanel",
+        help="Enter keywords to search the knowledge base"
+    )
+   
+    if search_query:
+        results = search_kb(search_query)
+       
+        if results:
+            st.success(f"✅ Found {len(results)} relevant article(s)")
+           
+            for result in results:
+                with st.expander(f"📄 {result['title']}", expanded=True):
+                    st.markdown(f"**Category:** {result['category'].replace('_', ' ').title()}")
+                    st.markdown(f"**Keywords:** {', '.join(result['keywords'][:5])}")
+                    st.link_button("📖 Read Article", result['url'], use_container_width=True)
+        else:
+            st.info("No articles found. Try different keywords.")
+   
     st.markdown("---")
-    
-    col4, col5, col6 = st.columns(3)
-    
-    with col4:
-        if st.button("🔒 SSL Setup", use_container_width=True):
-            st.markdown("""
-            **SSL Certificate:**
-            1. Go to SSL/TLS in cPanel
-            2. Click "Manage SSL"
-            3. Install Let's Encrypt (AutoSSL)
-            4. Force HTTPS in .htaccess
-            """)
-    
-    with col5:
-        if st.button("📁 FTP Setup", use_container_width=True):
-            st.markdown("""
-            **FTP Access:**
-            - Host: ftp.yourdomain.com
-            - Username: your-cpanel-user
-            - Password: your-cpanel-password
-            - Port: 21 (or 22 for SFTP)
-            """)
-    
-    with col6:
-        if st.button("🔧 Troubleshooting", use_container_width=True):
-            st.markdown("""
-            **Common Issues:**
-            - Check error logs first
-            - Verify DNS is correct
-            - Check file permissions
-            - Clear browser cache
-            - Test in incognito mode
-            """)
+    st.link_button("🌐 Browse Full Help Center", "https://help.hostafrica.com", use_container_width=True, type="primary")
 
 elif tool == "🔑 Password Strength Meter":
     st.title("🔑 Password Strength Meter")
