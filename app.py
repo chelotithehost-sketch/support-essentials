@@ -445,181 +445,63 @@ def search_kb(query):
 HOSTAFRICA_KB = {
     'email': [
         {
-            'title': 'How to Set Up Email on Your Device',
-            'url': 'https://help.hostafrica.com/email-setup',
+            'title': 'DirectAdmin and cPanel Email',
+            'url': 'https://help.hostafrica.com/category/control-panel-and-emails',
             'keywords': ['email', 'setup', 'imap', 'smtp', 'outlook', 'thunderbird', 'mail', 'configure', 'client']
         },
         {
-            'title': 'Email Deliverability Issues - SPF, DKIM, DMARC',
-            'url': 'https://help.hostafrica.com/email-deliverability',
-            'keywords': ['email', 'deliverability', 'spf', 'dkim', 'dmarc', 'spam', 'bouncing', 'not receiving']
-        },
-        {
-            'title': 'Email Authentication and Security',
-            'url': 'https://help.hostafrica.com/email-security',
-            'keywords': ['email', 'security', 'authentication', 'ssl', 'tls', 'password', 'secure']
-        },
-        {
-            'title': 'Common Email Error Messages',
-            'url': 'https://help.hostafrica.com/email-errors',
-            'keywords': ['email', 'error', 'smtp', 'imap', '550', '553', 'authentication failed', 'connection']
-        },
-        {
-            'title': 'Email Quota and Storage Management',
-            'url': 'https://help.hostafrica.com/email-quota',
-            'keywords': ['email', 'quota', 'storage', 'full', 'disk space', 'limit', 'mailbox']
+            'title': 'HMail and Workspace',
+            'url': 'https://help.hostafrica.com/category/professional-email-and-workspace',
+            'keywords': ['Hmail', 'Professional Mail', 'email', 'setup', 'imap', 'smtp', 'outlook', 'thunderbird', 'mail', 'configure', 'client']
         }
     ],
     'domain': [
         {
             'title': 'How to Point Your Domain to HostAfrica',
-            'url': 'https://help.hostafrica.com/domain-pointing',
+            'url': 'https://help.hostafrica.com/category/domains',
             'keywords': ['domain', 'nameservers', 'dns', 'pointing', 'ns1', 'ns2', 'setup']
         },
         {
             'title': 'Understanding DNS Records (A, CNAME, MX, TXT)',
-            'url': 'https://help.hostafrica.com/dns-records',
+            'url': 'https://help.hostafrica.com/category/dns-and-nameservers',
             'keywords': ['dns', 'records', 'a record', 'cname', 'mx', 'txt', 'zone', 'propagation']
         },
         {
             'title': 'Domain Transfer Guide',
-            'url': 'https://help.hostafrica.com/domain-transfer',
+            'url': 'https://help.hostafrica.com/category/domains',
             'keywords': ['domain', 'transfer', 'epp', 'auth code', 'registrar', 'migrate']
-        },
-        {
-            'title': 'DNS Propagation - What is it and How Long?',
-            'url': 'https://help.hostafrica.com/dns-propagation',
-            'keywords': ['dns', 'propagation', 'delay', 'waiting', 'not working', 'cache', '24 hours', '48 hours']
-        },
-        {
-            'title': 'Managing Subdomains',
-            'url': 'https://help.hostafrica.com/subdomains',
-            'keywords': ['subdomain', 'sub domain', 'creating', 'manage', 'dns', 'cpanel']
         }
     ],
     'cpanel': [
         {
             'title': 'cPanel Getting Started Guide',
-            'url': 'https://help.hostafrica.com/cpanel-basics',
+            'url': 'https://help.hostafrica.com/category/control-panel-and-emails/cpanel',
             'keywords': ['cpanel', 'getting started', 'basics', 'login', 'dashboard', 'control panel']
         },
         {
-            'title': 'File Manager - Upload and Manage Files',
-            'url': 'https://help.hostafrica.com/file-manager',
-            'keywords': ['file manager', 'upload', 'download', 'ftp', 'files', 'public_html', 'permissions']
-        },
-        {
-            'title': 'Creating MySQL Databases in cPanel',
-            'url': 'https://help.hostafrica.com/mysql-database',
-            'keywords': ['mysql', 'database', 'create', 'user', 'phpmyadmin', 'db', 'sql']
-        },
-        {
-            'title': 'Managing Backups in cPanel',
-            'url': 'https://help.hostafrica.com/backups',
-            'keywords': ['backup', 'restore', 'download', 'full backup', 'partial backup', 'jetbackup']
-        },
-        {
-            'title': 'Setting Up Cron Jobs',
-            'url': 'https://help.hostafrica.com/cron-jobs',
-            'keywords': ['cron', 'cron job', 'scheduled task', 'automation', 'script']
+            'title': 'DirectAdmin Getting Started Guide',
+            'url': 'https://help.hostafrica.com/category/control-panel-and-emails/directadmin',
+            'keywords': ['DirectAdmin', 'getting started', 'basics', 'login', 'dashboard']
         }
     ],
     'ssl': [
         {
-            'title': 'Installing Free Let\'s Encrypt SSL Certificate',
-            'url': 'https://help.hostafrica.com/ssl-letsencrypt',
-            'keywords': ['ssl', 'https', 'certificate', 'letsencrypt', 'free ssl', 'autossl', 'secure']
-        },
-        {
-            'title': 'Forcing HTTPS with .htaccess',
-            'url': 'https://help.hostafrica.com/force-https',
-            'keywords': ['https', 'redirect', 'htaccess', 'force ssl', 'http to https', 'rewrite']
-        },
-        {
-            'title': 'Fixing Mixed Content Warnings',
-            'url': 'https://help.hostafrica.com/mixed-content',
-            'keywords': ['mixed content', 'insecure', 'http', 'https', 'warning', 'padlock', 'ssl error']
-        },
-        {
-            'title': 'SSL Certificate Errors and Troubleshooting',
-            'url': 'https://help.hostafrica.com/ssl-errors',
-            'keywords': ['ssl', 'error', 'certificate', 'invalid', 'expired', 'self-signed', 'untrusted']
-        }
+            'title': 'SSL Certificate',
+            'url': 'https://help.hostafrica.com/category/ssl-certificates',
+            'keywords': ['ssl', 'https', 'certificate', 'secure']
+        }}
     ],
     'wordpress': [
         {
-            'title': 'WordPress Installation via Softaculous',
-            'url': 'https://help.hostafrica.com/wordpress-install',
+            'title': 'WordPress',
+            'url': 'https://help.hostafrica.com/category/wordpress',
             'keywords': ['wordpress', 'install', 'softaculous', 'one click', 'wp', 'setup']
         },
         {
-            'title': 'Troubleshooting Common WordPress Issues',
-            'url': 'https://help.hostafrica.com/wordpress-troubleshooting',
-            'keywords': ['wordpress', 'error', 'white screen', '500 error', 'not loading', 'slow', 'debug']
-        },
-        {
-            'title': 'WordPress Security Best Practices',
-            'url': 'https://help.hostafrica.com/wordpress-security',
-            'keywords': ['wordpress', 'security', 'hacked', 'malware', 'protect', 'firewall', 'secure']
-        },
-        {
-            'title': 'Optimizing WordPress Performance',
-            'url': 'https://help.hostafrica.com/wordpress-performance',
-            'keywords': ['wordpress', 'speed', 'performance', 'optimization', 'cache', 'slow', 'fast']
+            'title': 'Softaculous',
+            'url': 'https://help.hostafrica.com/category/softaculous',
+            'keywords': ['softaculous', 'one click']
         }
-    ],
-    'ftp': [
-        {
-            'title': 'FTP Setup and Configuration',
-            'url': 'https://help.hostafrica.com/ftp-setup',
-            'keywords': ['ftp', 'filezilla', 'setup', 'connect', 'sftp', 'port', 'credentials']
-        },
-        {
-            'title': 'Common FTP Connection Issues',
-            'url': 'https://help.hostafrica.com/ftp-errors',
-            'keywords': ['ftp', 'error', 'connection', 'timeout', 'refused', 'cannot connect', '530']
-        }
-    ],
-    'billing': [
-        {
-            'title': 'Understanding Your Invoice',
-            'url': 'https://help.hostafrica.com/billing-invoice',
-            'keywords': ['invoice', 'billing', 'payment', 'charge', 'price', 'cost']
-        },
-        {
-            'title': 'How to Upgrade Your Hosting Plan',
-            'url': 'https://help.hostafrica.com/upgrade-plan',
-            'keywords': ['upgrade', 'plan', 'package', 'resources', 'increase', 'limit']
-        },
-        {
-            'title': 'Renewal and Cancellation Policies',
-            'url': 'https://help.hostafrica.com/renewal-cancellation',
-            'keywords': ['renewal', 'cancel', 'refund', 'auto-renew', 'expire', 'subscription']
-        }
-    ],
-    'troubleshooting': [
-        {
-            'title': 'Website Not Loading - Troubleshooting Guide',
-            'url': 'https://help.hostafrica.com/site-not-loading',
-            'keywords': ['website', 'not loading', 'down', 'error', '500', '404', 'timeout', 'blank']
-        },
-        {
-            'title': 'Understanding Common Error Codes',
-            'url': 'https://help.hostafrica.com/error-codes',
-            'keywords': ['error', '404', '500', '502', '503', 'internal server error', 'bad gateway']
-        },
-        {
-            'title': 'Clearing Browser Cache',
-            'url': 'https://help.hostafrica.com/clear-cache',
-            'keywords': ['cache', 'clear', 'browser', 'refresh', 'hard refresh', 'ctrl+f5']
-        },
-        {
-            'title': 'File Permission Issues',
-            'url': 'https://help.hostafrica.com/file-permissions',
-            'keywords': ['permissions', 'chmod', '644', '755', 'access denied', 'forbidden']
-        }
-    ]
-}
 
 def search_kb(query):
     """Search knowledge base for relevant articles with improved relevance scoring"""
