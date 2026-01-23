@@ -1,0 +1,14 @@
+streamlit>=1.28.0
+requests>=2.31.0
+python-whois>=0.8.0
+Pillow>=10.0.0
+google-generativeai>=0.3.0
+urllib3>=2.0.0
+pandas>=2.2.0
+beautifulsoup4
+dnspython>=2.4.0
+pymysql>=1.1.0
+pytz>=2023.3
+certifi>=2023.7.22
+charset-normalizer>=3.2.0
+idna>=3.4
