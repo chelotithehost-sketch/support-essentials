@@ -422,8 +422,25 @@ def get_live_ns(domain):
             return [r['data'].lower().rstrip('.') for r in res['Answer'] if r['type'] == 2]
     except:
         pass
-    return []  
+    return []
 
+def search_kb(query):
+    """Search knowledge base for relevant articles"""
+    query = query.lower()
+    results = []
+   
+    for category, articles in HOSTAFRICA_KB.items():
+        for article in articles:
+            # Check if query matches title or keywords
+            if query in article['title'].lower():
+                results.append({**article, 'category': category, 'relevance': 2})
+            elif any(query in keyword for keyword in article['keywords']):
+                results.append({**article, 'category': category, 'relevance': 1})
+   
+    # Sort by relevance
+    results.sort(key=lambda x: x['relevance'], reverse=True)
+    return results[:10]
+    
 # ============================================================================
 # SIDEBAR NAVIGATION
 # ============================================================================
