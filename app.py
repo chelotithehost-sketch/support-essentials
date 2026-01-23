@@ -489,7 +489,7 @@ HOSTAFRICA_KB = {
             'title': 'SSL Certificate',
             'url': 'https://help.hostafrica.com/category/ssl-certificates',
             'keywords': ['ssl', 'https', 'certificate', 'secure']
-        }}
+        }
     ],
     'wordpress': [
         {
@@ -503,6 +503,7 @@ HOSTAFRICA_KB = {
             'keywords': ['softaculous', 'one click']
         }
     ]
+}
     
     def search_kb(query):
     """Search knowledge base for relevant articles with improved relevance scoring"""
