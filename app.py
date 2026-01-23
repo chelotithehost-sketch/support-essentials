@@ -503,9 +503,9 @@ HOSTAFRICA_KB = {
             'keywords': ['softaculous', 'one click']
         }
     ]
-}
-    
-    def search_kb(query):
+} 
+
+def search_kb(query):
     """Search knowledge base for relevant articles with improved relevance scoring"""
     if not query:
         return []
