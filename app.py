@@ -441,6 +441,238 @@ def search_kb(query):
     results.sort(key=lambda x: x['relevance'], reverse=True)
     return results[:10]
     
+# Knowledge Base Articles Database
+HOSTAFRICA_KB = {
+    'email': [
+        {
+            'title': 'How to Set Up Email on Your Device',
+            'url': 'https://help.hostafrica.com/email-setup',
+            'keywords': ['email', 'setup', 'imap', 'smtp', 'outlook', 'thunderbird', 'mail', 'configure', 'client']
+        },
+        {
+            'title': 'Email Deliverability Issues - SPF, DKIM, DMARC',
+            'url': 'https://help.hostafrica.com/email-deliverability',
+            'keywords': ['email', 'deliverability', 'spf', 'dkim', 'dmarc', 'spam', 'bouncing', 'not receiving']
+        },
+        {
+            'title': 'Email Authentication and Security',
+            'url': 'https://help.hostafrica.com/email-security',
+            'keywords': ['email', 'security', 'authentication', 'ssl', 'tls', 'password', 'secure']
+        },
+        {
+            'title': 'Common Email Error Messages',
+            'url': 'https://help.hostafrica.com/email-errors',
+            'keywords': ['email', 'error', 'smtp', 'imap', '550', '553', 'authentication failed', 'connection']
+        },
+        {
+            'title': 'Email Quota and Storage Management',
+            'url': 'https://help.hostafrica.com/email-quota',
+            'keywords': ['email', 'quota', 'storage', 'full', 'disk space', 'limit', 'mailbox']
+        }
+    ],
+    'domain': [
+        {
+            'title': 'How to Point Your Domain to HostAfrica',
+            'url': 'https://help.hostafrica.com/domain-pointing',
+            'keywords': ['domain', 'nameservers', 'dns', 'pointing', 'ns1', 'ns2', 'setup']
+        },
+        {
+            'title': 'Understanding DNS Records (A, CNAME, MX, TXT)',
+            'url': 'https://help.hostafrica.com/dns-records',
+            'keywords': ['dns', 'records', 'a record', 'cname', 'mx', 'txt', 'zone', 'propagation']
+        },
+        {
+            'title': 'Domain Transfer Guide',
+            'url': 'https://help.hostafrica.com/domain-transfer',
+            'keywords': ['domain', 'transfer', 'epp', 'auth code', 'registrar', 'migrate']
+        },
+        {
+            'title': 'DNS Propagation - What is it and How Long?',
+            'url': 'https://help.hostafrica.com/dns-propagation',
+            'keywords': ['dns', 'propagation', 'delay', 'waiting', 'not working', 'cache', '24 hours', '48 hours']
+        },
+        {
+            'title': 'Managing Subdomains',
+            'url': 'https://help.hostafrica.com/subdomains',
+            'keywords': ['subdomain', 'sub domain', 'creating', 'manage', 'dns', 'cpanel']
+        }
+    ],
+    'cpanel': [
+        {
+            'title': 'cPanel Getting Started Guide',
+            'url': 'https://help.hostafrica.com/cpanel-basics',
+            'keywords': ['cpanel', 'getting started', 'basics', 'login', 'dashboard', 'control panel']
+        },
+        {
+            'title': 'File Manager - Upload and Manage Files',
+            'url': 'https://help.hostafrica.com/file-manager',
+            'keywords': ['file manager', 'upload', 'download', 'ftp', 'files', 'public_html', 'permissions']
+        },
+        {
+            'title': 'Creating MySQL Databases in cPanel',
+            'url': 'https://help.hostafrica.com/mysql-database',
+            'keywords': ['mysql', 'database', 'create', 'user', 'phpmyadmin', 'db', 'sql']
+        },
+        {
+            'title': 'Managing Backups in cPanel',
+            'url': 'https://help.hostafrica.com/backups',
+            'keywords': ['backup', 'restore', 'download', 'full backup', 'partial backup', 'jetbackup']
+        },
+        {
+            'title': 'Setting Up Cron Jobs',
+            'url': 'https://help.hostafrica.com/cron-jobs',
+            'keywords': ['cron', 'cron job', 'scheduled task', 'automation', 'script']
+        }
+    ],
+    'ssl': [
+        {
+            'title': 'Installing Free Let\'s Encrypt SSL Certificate',
+            'url': 'https://help.hostafrica.com/ssl-letsencrypt',
+            'keywords': ['ssl', 'https', 'certificate', 'letsencrypt', 'free ssl', 'autossl', 'secure']
+        },
+        {
+            'title': 'Forcing HTTPS with .htaccess',
+            'url': 'https://help.hostafrica.com/force-https',
+            'keywords': ['https', 'redirect', 'htaccess', 'force ssl', 'http to https', 'rewrite']
+        },
+        {
+            'title': 'Fixing Mixed Content Warnings',
+            'url': 'https://help.hostafrica.com/mixed-content',
+            'keywords': ['mixed content', 'insecure', 'http', 'https', 'warning', 'padlock', 'ssl error']
+        },
+        {
+            'title': 'SSL Certificate Errors and Troubleshooting',
+            'url': 'https://help.hostafrica.com/ssl-errors',
+            'keywords': ['ssl', 'error', 'certificate', 'invalid', 'expired', 'self-signed', 'untrusted']
+        }
+    ],
+    'wordpress': [
+        {
+            'title': 'WordPress Installation via Softaculous',
+            'url': 'https://help.hostafrica.com/wordpress-install',
+            'keywords': ['wordpress', 'install', 'softaculous', 'one click', 'wp', 'setup']
+        },
+        {
+            'title': 'Troubleshooting Common WordPress Issues',
+            'url': 'https://help.hostafrica.com/wordpress-troubleshooting',
+            'keywords': ['wordpress', 'error', 'white screen', '500 error', 'not loading', 'slow', 'debug']
+        },
+        {
+            'title': 'WordPress Security Best Practices',
+            'url': 'https://help.hostafrica.com/wordpress-security',
+            'keywords': ['wordpress', 'security', 'hacked', 'malware', 'protect', 'firewall', 'secure']
+        },
+        {
+            'title': 'Optimizing WordPress Performance',
+            'url': 'https://help.hostafrica.com/wordpress-performance',
+            'keywords': ['wordpress', 'speed', 'performance', 'optimization', 'cache', 'slow', 'fast']
+        }
+    ],
+    'ftp': [
+        {
+            'title': 'FTP Setup and Configuration',
+            'url': 'https://help.hostafrica.com/ftp-setup',
+            'keywords': ['ftp', 'filezilla', 'setup', 'connect', 'sftp', 'port', 'credentials']
+        },
+        {
+            'title': 'Common FTP Connection Issues',
+            'url': 'https://help.hostafrica.com/ftp-errors',
+            'keywords': ['ftp', 'error', 'connection', 'timeout', 'refused', 'cannot connect', '530']
+        }
+    ],
+    'billing': [
+        {
+            'title': 'Understanding Your Invoice',
+            'url': 'https://help.hostafrica.com/billing-invoice',
+            'keywords': ['invoice', 'billing', 'payment', 'charge', 'price', 'cost']
+        },
+        {
+            'title': 'How to Upgrade Your Hosting Plan',
+            'url': 'https://help.hostafrica.com/upgrade-plan',
+            'keywords': ['upgrade', 'plan', 'package', 'resources', 'increase', 'limit']
+        },
+        {
+            'title': 'Renewal and Cancellation Policies',
+            'url': 'https://help.hostafrica.com/renewal-cancellation',
+            'keywords': ['renewal', 'cancel', 'refund', 'auto-renew', 'expire', 'subscription']
+        }
+    ],
+    'troubleshooting': [
+        {
+            'title': 'Website Not Loading - Troubleshooting Guide',
+            'url': 'https://help.hostafrica.com/site-not-loading',
+            'keywords': ['website', 'not loading', 'down', 'error', '500', '404', 'timeout', 'blank']
+        },
+        {
+            'title': 'Understanding Common Error Codes',
+            'url': 'https://help.hostafrica.com/error-codes',
+            'keywords': ['error', '404', '500', '502', '503', 'internal server error', 'bad gateway']
+        },
+        {
+            'title': 'Clearing Browser Cache',
+            'url': 'https://help.hostafrica.com/clear-cache',
+            'keywords': ['cache', 'clear', 'browser', 'refresh', 'hard refresh', 'ctrl+f5']
+        },
+        {
+            'title': 'File Permission Issues',
+            'url': 'https://help.hostafrica.com/file-permissions',
+            'keywords': ['permissions', 'chmod', '644', '755', 'access denied', 'forbidden']
+        }
+    ]
+}
+
+def search_kb(query):
+    """Search knowledge base for relevant articles with improved relevance scoring"""
+    if not query:
+        return []
+    
+    query = query.lower().strip()
+    results = []
+    
+    for category, articles in HOSTAFRICA_KB.items():
+        for article in articles:
+            relevance_score = 0
+            
+            # Title match (highest relevance)
+            if query in article['title'].lower():
+                relevance_score += 10
+            
+            # Exact keyword match
+            if query in article['keywords']:
+                relevance_score += 8
+            
+            # Partial keyword match
+            for keyword in article['keywords']:
+                if query in keyword or keyword in query:
+                    relevance_score += 5
+                    break
+            
+            # Word-by-word matching for multi-word queries
+            query_words = query.split()
+            if len(query_words) > 1:
+                for word in query_words:
+                    if len(word) > 2:  # Ignore short words
+                        if word in article['title'].lower():
+                            relevance_score += 3
+                        for keyword in article['keywords']:
+                            if word in keyword:
+                                relevance_score += 2
+                                break
+            
+            # Add to results if any relevance found
+            if relevance_score > 0:
+                results.append({
+                    **article,
+                    'category': category,
+                    'relevance': relevance_score
+                })
+    
+    # Sort by relevance (highest first)
+    results.sort(key=lambda x: x['relevance'], reverse=True)
+    
+    # Return top 10 results
+    return results[:10]
+    
 # ============================================================================
 # SIDEBAR NAVIGATION
 # ============================================================================
@@ -2306,28 +2538,74 @@ elif tool == "🔐 File Permission Checker":
 # UTILITIES
 elif tool == "📚 Help Center":
     st.title("📚 HostAfrica Knowledge Base")
-    st.markdown("Search for guides and documentation")
-   
+    st.markdown("Search our comprehensive knowledge base for guides and documentation")
+    
+    # Search input
     search_query = st.text_input(
-        "Search knowledge base:",
-        placeholder="e.g., email setup, dns, cpanel",
+        "🔍 Search:",
+        placeholder="e.g., email setup, dns, cpanel, ssl certificate",
         help="Enter keywords to search the knowledge base"
     )
-   
+    
     if search_query:
         results = search_kb(search_query)
-       
+        
         if results:
             st.success(f"✅ Found {len(results)} relevant article(s)")
-           
-            for result in results:
-                with st.expander(f"📄 {result['title']}", expanded=True):
-                    st.markdown(f"**Category:** {result['category'].replace('_', ' ').title()}")
-                    st.markdown(f"**Keywords:** {', '.join(result['keywords'][:5])}")
-                    st.link_button("📖 Read Article", result['url'], use_container_width=True)
+            
+            for idx, result in enumerate(results, 1):
+                with st.expander(f"📄 {result['title']}", expanded=(idx <= 3)):
+                    col1, col2 = st.columns([3, 1])
+                    
+                    with col1:
+                        st.markdown(f"**Category:** {result['category'].replace('_', ' ').title()}")
+                        st.markdown(f"**Related Topics:** {', '.join(result['keywords'][:6])}")
+                    
+                    with col2:
+                        st.link_button("📖 Read", result['url'], use_container_width=True)
         else:
-            st.info("No articles found. Try different keywords.")
-   
+            st.info("💡 No articles found. Try different keywords or browse categories below.")
+    
+    # Popular Categories
+    st.markdown("---")
+    st.markdown("### 📂 Browse by Category")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("📧 Email", use_container_width=True):
+            st.session_state.kb_category = 'email'
+        if st.button("🌐 Domain & DNS", use_container_width=True):
+            st.session_state.kb_category = 'domain'
+    
+    with col2:
+        if st.button("🔧 cPanel", use_container_width=True):
+            st.session_state.kb_category = 'cpanel'
+        if st.button("🔒 SSL & HTTPS", use_container_width=True):
+            st.session_state.kb_category = 'ssl'
+    
+    with col3:
+        if st.button("💻 WordPress", use_container_width=True):
+            st.session_state.kb_category = 'wordpress'
+        if st.button("📁 FTP", use_container_width=True):
+            st.session_state.kb_category = 'ftp'
+    
+    with col4:
+        if st.button("💳 Billing", use_container_width=True):
+            st.session_state.kb_category = 'billing'
+        if st.button("🔍 Troubleshooting", use_container_width=True):
+            st.session_state.kb_category = 'troubleshooting'
+    
+    # Show category articles if selected
+    if 'kb_category' in st.session_state:
+        category = st.session_state.kb_category
+        st.markdown(f"### {category.title()} Articles")
+        
+        for article in HOSTAFRICA_KB.get(category, []):
+            with st.expander(f"📄 {article['title']}"):
+                st.markdown(f"**Keywords:** {', '.join(article['keywords'][:8])}")
+                st.link_button("📖 Read Article", article['url'], use_container_width=True)
+    
     st.markdown("---")
     st.link_button("🌐 Browse Full Help Center", "https://help.hostafrica.com", use_container_width=True, type="primary")
 
