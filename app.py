@@ -1,4 +1,3 @@
-# (Full file content follows)
 import streamlit as st
 import requests
 from datetime import datetime
@@ -115,274 +114,217 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS (Typography & Windows 11-like styling)
+# ============================================================================
+# PROFESSIONAL COMPACT CSS FOR SUPPORT BUDDY - DESKTOP OPTIMIZED
+# ============================================================================
+# This CSS is designed for professional desktop applications with:
+# - Reduced vertical spacing (no more "child's play" look)
+# - Tighter, more efficient layout
+# - Enterprise-grade appearance
+# - Optimized for 1920px+ displays
+# ============================================================================
+
 st.markdown("""
     <style>
+    /* ========================================================================
+       1. CSS VARIABLES & DESIGN TOKENS
+       ======================================================================== */
     :root {
-      /* Fluent / Windows 11 inspired palette */
-      --win-accent-1: #0078D4;    /* primary blue */
-      --win-accent-2: #2b88d8;    /* secondary blue */
-      --win-muted: #64748b;       /* muted text */
-      --win-bg-1: #f6f8fb;        /* subtle page background */
-      --glass: rgba(255,255,255,0.60);
-      --card-radius: 12px;
-      --card-radius-large: 16px;
-      --soft-shadow: 0 8px 24px rgba(16,24,40,0.06);
-      --soft-shadow-strong: 0 14px 40px rgba(16,24,40,0.10);
+        /* Color System */
+        --win-accent-primary: #0078D4;
+        --win-accent-secondary: #2B88D8;
+        --win-accent-hover: #005A9E;
+        --deep-navy: #003366;
+        --deep-navy-dark: #002244;
+        --win-bg-base: #F3F6F9;
+        --win-bg-elevated: #FFFFFF;
+        --win-bg-acrylic: rgba(255, 255, 255, 0.75);
+        
+        /* Text Colors */
+        --text-primary: #0F1724;
+        --text-secondary: #5E6E82;
+        --text-tertiary: #8B98A9;
+        --text-on-accent: #FFFFFF;
+        
+        /* Spacing Scale */
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 0.75rem;
+        --space-lg: 1rem;
+        --space-xl: 1.25rem;
+        --space-2xl: 1.5rem;
+        
+        /* Design Tokens */
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --radius-full: 9999px;
+        
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 3px 8px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.08);
+        
+        --transition-base: 180ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Use Segoe UI Variable on Windows, fallback to Roboto/Inter/system UI */
-    html, body, [class*="css"] {
-      font-family: "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Inter, Arial, system-ui;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      color: #0f1724;
-      background: var(--win-bg-1);
+    /* ========================================================================
+       2. GLOBAL RESET & BASE STYLES
+       ======================================================================== */
+    .stApp {
+        background-color: var(--win-bg-base) !important;
+        font-family: "Segoe UI Variable", "Segoe UI", -apple-system, sans-serif !important;
+    }
+    
+    .block-container {
+        padding-top: var(--space-md) !important;
+        padding-bottom: var(--space-lg) !important;
+        max-width: 1800px;
     }
 
-    /* Fluid/responsive typography */
-    html { font-size: 16px; }
-    @media (max-width:1200px){ html { font-size:15px; } }
-    @media (max-width:992px){  html { font-size:14px; } }
-    @media (max-width:720px){  html { font-size:13px; } }
+    h1, h2, h3 {
+        color: var(--text-primary) !important;
+        font-weight: 700 !important;
+        margin-bottom: var(--space-sm) !important;
+    }
 
-    .main { padding: 1rem 2rem; }
+    /* ========================================================================
+       3. SIDEBAR STYLING
+       ======================================================================== */
+    [data-testid="stSidebar"] {
+        background: var(--win-bg-acrylic) !important;
+        backdrop-filter: blur(40px) saturate(180%) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
 
-    /* Category Cards with Dynamic Colors */
+    /* ========================================================================
+       4. PROFESSIONAL BUTTON SYSTEM (WITH HOVER TEXT FIX)
+       ======================================================================== */
+    div.stButton > button {
+        width: 100%;
+        min-height: 38px;
+        padding: var(--space-sm) var(--space-md) !important;
+        border-radius: var(--radius-md) !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        transition: all var(--transition-base) !important;
+        box-shadow: var(--shadow-sm) !important;
+        cursor: pointer !important;
+    }
+    
+    /* Button Hover: Dark Background */
+    div.stButton > button:hover {
+        background: var(--deep-navy) !important;
+        border-color: var(--deep-navy) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(0, 51, 102, 0.25) !important;
+    }
+
+    /* THE FIX: Force all text inside button to be white on hover */
+    div.stButton > button:hover * {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
+    
+    div.stButton > button:active {
+        transform: translateY(0px) scale(0.98) !important;
+        background: var(--deep-navy-dark) !important;
+    }
+
+    /* ========================================================================
+       5. CATEGORY CARDS
+       ======================================================================== */
     .category-card {
-      padding: 1.5rem;
-      border-radius: var(--card-radius-large);
-      color: white;
-      text-align: left;
-      cursor: pointer;
-      transition: transform 0.22s cubic-bezier(.2,.9,.3,1), box-shadow 0.22s ease, background 0.22s ease;
-      margin: 1rem 0;
-      min-height: 160px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: var(--soft-shadow);
-      border: 1px solid rgba(15,23,42,0.04);
-      background-blend-mode: overlay;
-      backdrop-filter: blur(6px) saturate(120%);
+        padding: var(--space-md) var(--space-lg);
+        border-radius: var(--radius-lg);
+        min-height: 110px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: all var(--transition-base);
+        box-shadow: var(--shadow-md);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white;
+        margin: var(--space-sm) 0;
     }
-
-    /* Subtle acrylic overlay on hover */
-    .category-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      opacity: 0;
-      transition: opacity 0.22s ease;
-      pointer-events: none;
-    }
-
+    
     .category-card:hover {
-      transform: translateY(-6px);
-      box-shadow: var(--soft-shadow-strong);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
     }
+    
+    .category-icon { font-size: 2rem; margin-bottom: var(--space-xs); }
+    .category-title { font-size: 1rem; font-weight: 700; color: #FFFFFF; }
+    .category-description { font-size: 0.85rem; opacity: 0.9; }
 
-    .category-card:hover::before { opacity: 1; }
-
-    .category-icon {
-      font-size: 2.8rem;
-      margin-bottom: 0.6rem;
-      text-shadow: 0 6px 18px rgba(2,6,23,0.12);
-      animation: float 4s ease-in-out infinite;
-      line-height: 1;
+    /* ========================================================================
+       6. SEARCH COMPONENTS
+       ======================================================================== */
+    div[data-testid="stTextInput"] input {
+        border-radius: var(--radius-md) !important;
+        border: 1px solid rgba(0, 0, 0, 0.10) !important;
+        min-height: 36px !important;
+        background: var(--win-bg-elevated) !important;
     }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-6px); }
+    
+    div[data-testid="stTextInput"] input:focus {
+        border-color: var(--win-accent-primary) !important;
+        box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.10) !important;
     }
-
-    .category-title {
-      font-size: 1.125rem; /* ~18px */
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      color: #ffffff;
-      letter-spacing: -0.2px;
-    }
-
-    .category-count {
-      font-size: 0.85rem;
-      opacity: 0.95;
-      background: rgba(255,255,255,0.12);
-      padding: 0.25rem 0.7rem;
-      border-radius: 999px;
-      display: inline-block;
-      margin-top: 0.45rem;
-      font-weight: 600;
-      color: rgba(255,255,255,0.95);
-    }
-
-    .category-description {
-      font-size: 0.9rem;
-      opacity: 0.95;
-      margin-top: 0.35rem;
-      font-style: normal;
-      color: rgba(255,255,255,0.92);
-    }
-
-    /* Search Box Styling with acrylic / blur */
-    .search-container {
-      background: linear-gradient(90deg, rgba(255,255,255,0.70), rgba(255,255,255,0.62));
-      padding: 1.25rem;
-      border-radius: var(--card-radius);
-      margin-bottom: 1.25rem;
-      box-shadow: var(--soft-shadow);
-      border: 1px solid rgba(15,23,42,0.04);
-      backdrop-filter: blur(8px) saturate(120%);
-      color: #0f1724;
-    }
-
-    .search-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
 
     .search-result-card {
-      background: #ffffff;
-      border-left: 4px solid var(--win-accent-1);
-      padding: 0.9rem;
-      border-radius: 10px;
-      margin-bottom: 0.5rem;
-      transition: all 0.18s ease;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.04);
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--win-bg-elevated);
+        border-left: 3px solid var(--win-accent-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-xs);
+        transition: all var(--transition-base);
+        box-shadow: var(--shadow-xs);
     }
 
-    .search-result-card:hover {
-      transform: translateX(6px);
-      box-shadow: 0 12px 30px rgba(2,6,23,0.06);
-      border-left-width: 6px;
-    }
-
-    .search-tool-name {
-      font-weight: 700;
-      color: #0f1724;
-      font-size: 1rem;
-      margin-bottom: 0;
-      line-height: 1.1;
-    }
-
-    .search-category-badge {
-      display: inline-block;
-      padding: 0.18rem 0.6rem;
-      border-radius: 10px;
-      background: #f1f5f9;
-      color: var(--win-muted);
-      font-size: 0.78rem;
-      margin-top: 0.2rem;
-      font-weight: 600;
-    }
-
-    .no-results {
-      text-align: center;
-      padding: 1.5rem;
-      color: var(--win-muted);
-      font-size: 1rem;
-    }
-
-    /* Tool Button Styling – Windows 11 rounded pill with accent */
-    .tool-button {
-      margin: 0.45rem 0;
-      padding: 0.65rem 1.2rem;
-      border-radius: 10px;
-      background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
-      border: 1px solid rgba(15,23,42,0.04);
-      cursor: pointer;
-      transition: all 0.15s cubic-bezier(.2,.8,.2,1);
-      font-weight: 600;
-      color: #0f1724;
-      box-shadow: 0 4px 10px rgba(2,6,23,0.03);
-    }
-
-    .tool-button:hover {
-      background: linear-gradient(180deg, var(--win-accent-1), var(--win-accent-2));
-      color: #ffffff;
-      border-color: rgba(255,255,255,0.06);
-      transform: translateY(-3px);
-      box-shadow: 0 14px 40px rgba(15,76,212,0.12);
-    }
-
-    .tool-button:focus {
-      outline: 3px solid rgba(0,120,212,0.12);
-      outline-offset: 2px;
-      border-radius: 10px;
-    }
-
-    /* Status Boxes: subtle rounded cards */
+    /* ========================================================================
+       7. STATUS BOXES
+       ======================================================================== */
     .success-box, .warning-box, .error-box, .info-box {
-      padding: 1.25rem;
-      border-radius: 10px;
-      margin: 1rem 0;
-      box-shadow: 0 8px 28px rgba(2,6,23,0.03);
-      border-left: 6px solid transparent;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+        margin: var(--space-sm) 0;
+        border-left: 3px solid;
+        font-size: 0.9rem;
     }
+    .success-box { background: #F0FDF4; border-left-color: #10B981; color: #065F46; }
+    .error-box { background: #FEF2F2; border-left-color: #EF4444; color: #991B1B; }
+    .info-box { background: #EFF6FF; border-left-color: var(--win-accent-primary); color: #1E40AF; }
 
-    .success-box {
-      background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf3 100%);
-      border-left-color: #10b981;
-    }
-
-    .warning-box {
-      background: linear-gradient(180deg, #fffbeb 0%, #fffbf0 100%);
-      border-left-color: #f59e0b;
-    }
-
-    .error-box {
-      background: linear-gradient(180deg, #fff1f2 0%, #fff4f6 100%);
-      border-left-color: #ef4444;
-    }
-
-    .info-box {
-      background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
-      border-left-color: var(--win-accent-1);
-    }
-
-    /* Stats Badge */
+    /* ========================================================================
+       8. UTILITY & CLEANUP
+       ======================================================================== */
+    #MainMenu, footer, header { visibility: hidden; }
+    
     .stats-badge {
-      background: linear-gradient(90deg, var(--win-accent-1) 0%, var(--win-accent-2) 100%);
-      color: white;
-      padding: 0.8rem 1.6rem;
-      border-radius: 12px;
-      text-align: center;
-      font-size: 1rem;
-      box-shadow: 0 10px 36px rgba(15,76,212,0.10);
-      margin: 1.6rem 0;
-      font-weight: 700;
+        display: inline-block;
+        background: linear-gradient(90deg, var(--win-accent-primary) 0%, var(--win-accent-secondary) 100%);
+        color: white;
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        box-shadow: var(--shadow-md);
+        margin: var(--space-md) 0;
     }
 
-    /* Breadcrumb */
-    .breadcrumb {
-      background: transparent;
-      padding: 0.5rem 0.6rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-      color: var(--win-muted);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 1024px) {
-      .category-card { min-height: 150px; }
-    }
-    @media (max-width: 768px) {
-      .category-icon { font-size: 2.2rem; }
-      .category-title { font-size: 1rem; }
-      .search-container { padding: 1rem; }
-      .category-card { min-height: 140px; padding: 1rem; }
-      .main { padding: 0.8rem 1rem; }
+    /* GPU Acceleration */
+    .category-card, div.stButton > button, .search-result-card {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # Session state initialization
 if 'chat_history' not in st.session_state:
@@ -907,13 +849,66 @@ def _sanitize_key(s: str) -> str:
 
 def render_all_categories_and_tools():
     """Render a single page with all categories and their tools (grid of buttons)"""
-    st.title("🏠 Welcome to Support Buddy")
-    st.markdown("### Your Complete Technical Support Toolkit.")
-    st.markdown("---")
-
-    total_tools = sum(len(cat['tools']) for cat in TOOL_CATEGORIES.values())
-    st.markdown(f"<div class='stats-badge'>📊 {total_tools} tools available</div>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # HEADER
+    # ---------------------------------------------------
+    st.markdown("""
+        <style>
+        .centered-header {
+            text-align: center;
+            margin: 1rem 0 2rem 0;
+            padding: 0 1rem;
+        }
+        
+        .centered-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0F1724;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .centered-header h3 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #586069;
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+        
+        .centered-header .tools-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #0078D4 0%, #2B88D8 100%);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.2);
+            margin-bottom: 1.5rem;
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+        
+        .centered-header .tools-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 120, 212, 0.25);
+        }
+        
+        .centered-header hr {
+            margin: 1.5rem auto;
+            max-width: 80%;
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        </style>
+        
+        <div class="centered-header">
+            <h1>🏠 Welcome to Support Buddy</h1>
+            <h3>Your Complete Technical Support Toolkit.</h3>
+            <div class="tools-badge">📊 36 tools available</div>
+            <hr>
+        </div>
+    """, unsafe_allow_html=True)
 
     for category_name, category_info in TOOL_CATEGORIES.items():
         icon = category_info.get('icon', '')
@@ -3177,6 +3172,11 @@ ORDER BY (data_length + index_length) DESC;""", language="sql")
         - **Edge**: `Ctrl+Shift+N` (Windows) or `Cmd+Shift+N` (Mac)
         - **Opera**: `Ctrl+Shift+N` (Windows) or `Cmd+Shift+N` (Mac)
         """)
+
+
+
+
+
 
 
 
