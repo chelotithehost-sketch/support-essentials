@@ -105,7 +105,13 @@ try:
         GEMINI_AVAILABLE = True
 except:
     pass
-
+# Configure SecurityTrails API
+SECURITYTRAILS_API_KEY = ""
+try:
+    SECURITYTRAILS_API_KEY = st.secrets.get("SECURITYTRAILS_API_KEY", "")
+except:
+    pass    
+ 
 # Page Configuration
 st.set_page_config(
     page_title="Support Buddy",
@@ -361,7 +367,7 @@ TOOL_CATEGORIES = {
             "🔐 PIN Checker",
             "🔓 IP Unban",
             "📝 Bulk NS Updater",
-            "📋 cPanel Account List"
+            "📋 cPanel and DA Checker"
         ],
         "description": "Your essential admin tools",
         "color": CATEGORY_COLORS.get("Admin Links")
@@ -392,7 +398,8 @@ TOOL_CATEGORIES = {
             "🔍 Domain Status Check",
             "🔎 DNS Analyzer",
             "📋 NS Authority Checker",
-            "🌍 WHOIS Lookup"
+            "🌍 WHOIS Lookup",
+            "📜 Historical DNS"
         ],
         "description": "Domain Tools",
         "color": CATEGORY_COLORS.get("Domain & DNS")
@@ -601,6 +608,225 @@ def lookup_whois(domain):
         return True, w
     except Exception as e:
         return False, f"WHOIS error: {str(e)}"
+
+def check_historical_dns(domain, use_virustotal=True, use_securitytrails=True, record_type="A"):
+    """Check historical DNS records from free sources"""
+    
+    st.markdown("---")
+    
+    # SecurityTrails Historical DNS
+    if use_securitytrails:
+        st.subheader("🔒 SecurityTrails Historical DNS")
+        
+        # Check for API key in secrets first, then allow manual input
+        api_key = SECURITYTRAILS_API_KEY
+        
+        if not api_key:
+            api_key = st.text_input("SecurityTrails API Key:", type="password", 
+                                   help="Add to secrets.toml as SECURITYTRAILS_API_KEY or enter here")
+        
+        if api_key:
+            try:
+                # Map record types to SecurityTrails endpoints
+                record_map = {
+                    "A": "a",
+                    "AAAA": "aaaa",
+                    "MX": "mx",
+                    "NS": "ns",
+                    "SOA": "soa",
+                    "TXT": "txt"
+                }
+                
+                endpoint_type = record_map.get(record_type, "a")
+                url = f"https://api.securitytrails.com/v1/history/{domain}/dns/{endpoint_type}"
+                headers = {
+                    'APIKEY': api_key,
+                    'Accept': 'application/json'
+                }
+                
+                response = requests.get(url, headers=headers, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'records' in data and len(data['records']) > 0:
+                        records = []
+                        for record in data['records']:
+                            values = record.get('values', [])
+                            
+                            # Handle different record types
+                            if record_type == "MX":
+                                value_str = ', '.join([f"{v.get('priority', '')} {v.get('hostname', '')}" for v in values if isinstance(v, dict)])
+                            elif record_type == "SOA":
+                                if values and isinstance(values[0], dict):
+                                    soa = values[0]
+                                    value_str = f"Primary: {soa.get('email', 'N/A')}"
+                                else:
+                                    value_str = str(values)
+                            else:
+                                value_str = ', '.join([str(v) for v in values]) if isinstance(values, list) else str(values)
+                            
+                            records.append({
+                                'Type': record.get('type', record_type),
+                                'Values': value_str,
+                                'First Seen': record.get('first_seen', 'N/A'),
+                                'Last Seen': record.get('last_seen', 'N/A'),
+                                'Organizations': ', '.join(record.get('organizations', [])) if record.get('organizations') else 'N/A'
+                            })
+                        
+                        df = pd.DataFrame(records)
+                        st.dataframe(df, use_container_width=True)
+                        st.success(f"✅ Found {len(records)} historical {record_type} records from SecurityTrails")
+                        
+                        # Download option
+                        csv = df.to_csv(index=False)
+                        st.download_button(
+                            "📥 Download CSV",
+                            csv,
+                            f"historical_dns_{domain}_{record_type}_{datetime.now().strftime('%Y%m%d')}.csv",
+                            "text/csv",
+                            use_container_width=True
+                        )
+                    else:
+                        st.info(f"ℹ️ No historical {record_type} records found on SecurityTrails")
+                        
+                elif response.status_code == 401:
+                    st.error("❌ Invalid API key. Please check your SecurityTrails API key.")
+                elif response.status_code == 429:
+                    st.error("❌ Rate limit exceeded. Free tier: 50 queries/month")
+                elif response.status_code == 404:
+                    st.warning(f"⚠️ No data found for this domain on SecurityTrails")
+                else:
+                    st.warning(f"⚠️ SecurityTrails returned status code: {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        st.error(f"Error details: {error_data.get('message', 'Unknown error')}")
+                    except:
+                        pass
+                        
+            except Exception as e:
+                st.error(f"❌ Error querying SecurityTrails: {str(e)}")
+        else:
+            st.info("👆 Enter your SecurityTrails API key or add it to secrets.toml")
+        
+        st.markdown("---")
+    
+    # VirusTotal Passive DNS
+    if use_virustotal:
+        st.subheader("🦠 VirusTotal Passive DNS")
+        try:
+            url = f"https://www.virustotal.com/ui/domains/{domain}/resolutions?limit=40"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and len(data['data']) > 0:
+                    records = []
+                    for item in data['data']:
+                        ip = item.get('attributes', {}).get('ip_address', 'N/A')
+                        last_resolved = item.get('attributes', {}).get('date', 'N/A')
+                        if last_resolved != 'N/A':
+                            last_resolved = datetime.fromtimestamp(last_resolved).strftime('%Y-%m-%d %H:%M:%S')
+                        records.append({
+                            'IP Address': ip,
+                            'Last Resolved': last_resolved
+                        })
+                    
+                    df = pd.DataFrame(records)
+                    st.dataframe(df, use_container_width=True)
+                    st.success(f"✅ Found {len(records)} historical IP resolutions from VirusTotal")
+                    
+                    # Download option
+                    csv = df.to_csv(index=False)
+                    st.download_button(
+                        "📥 Download CSV",
+                        csv,
+                        f"virustotal_dns_{domain}_{datetime.now().strftime('%Y%m%d')}.csv",
+                        "text/csv",
+                        use_container_width=True
+                    )
+                else:
+                    st.info("ℹ️ No historical records found on VirusTotal")
+            else:
+                st.warning(f"⚠️ VirusTotal returned status code: {response.status_code}")
+        except Exception as e:
+            st.error(f"❌ Error querying VirusTotal: {str(e)}")
+        
+        st.markdown("---")
+    
+    # Current DNS for comparison
+    st.subheader("📍 Current DNS Records (For Comparison)")
+    if DNS_AVAILABLE:
+        try:
+            resolver = dns.resolver.Resolver()
+            resolver.timeout = 5
+            resolver.lifetime = 5
+            
+            current_records = []
+            for rec_type in ['A', 'AAAA', 'MX', 'NS', 'TXT', 'SOA']:
+                try:
+                    answers = resolver.resolve(domain, rec_type)
+                    for rdata in answers:
+                        current_records.append({
+                            'Type': rec_type,
+                            'Value': str(rdata),
+                            'TTL': answers.rrset.ttl,
+                            'Status': '✅ Current'
+                        })
+                except:
+                    pass
+            
+            if current_records:
+                df = pd.DataFrame(current_records)
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.info("ℹ️ No current DNS records found")
+        except Exception as e:
+            st.error(f"❌ Error fetching current DNS: {str(e)}")
+    else:
+        st.warning("⚠️ DNS module not available for current record lookup")
+    
+    # Additional information
+    st.markdown("---")
+    st.markdown("### 💡 About Historical DNS & API Usage")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.info("""
+        **SecurityTrails Features:**
+        - Historical A, AAAA, MX, NS, SOA, TXT records
+        - First seen / Last seen timestamps
+        - Associated organizations
+        - Free tier: 50 API calls/month
+        - No credit card required
+        
+        **Record Types:**
+        - **A**: IPv4 addresses
+        - **AAAA**: IPv6 addresses
+        - **MX**: Mail servers
+        - **NS**: Name servers
+        - **SOA**: Start of Authority
+        - **TXT**: Text records
+        """)
+    
+    with col2:
+        st.success("""
+        **Use Cases:**
+        - 🔍 Track infrastructure changes
+        - 🏢 Identify previous hosting providers
+        - 🕵️ Investigate domain history
+        - 🛡️ Detect malicious redirects
+        - 📊 Monitor DNS migrations
+        - 🔐 Security auditing
+        - 📧 Email server history (MX)
+        - 🌐 Nameserver changes (NS)
+        
+        **VirusTotal**: Free passive DNS data
+        **SecurityTrails**: Professional DNS history
+        """)
 
 def get_client_ip():
     """Get client's public IP address"""
@@ -998,16 +1224,17 @@ else:
                 use_container_width=True
             )
 
-    elif tool == "📋 cPanel Account List":
-        st.title("📋 cPanel Account List")
-        st.markdown("View a comprehensive list of all hosted cPanel accounts and their details.")
+    elif tool == "📋 cPanel and DA Checker":
+        st.title("📋 cPanel and DA Checker")
+        st.markdown("View a comprehensive list of all hosted cPanel or DirectAdmin accounts and their details.")
         
         col1, col2 = st.columns([3, 1])
         with col1:
             st.info("Access account status, package types, and owner details.")
         with col2:
-            st.link_button("📂 Open List", "https://my.hostafrica.com/admin/custom/scripts/custom_tests/listaccounts.php", use_container_width=True)
-
+            st.link_button("📂 DA and cPanel", "https://my.hostafrica.com/admin/custom/scripts/findHostingByDomain", use_container_width=True)
+            st.link_button("📂 List cPanel Only", "https://my.hostafrica.com/admin/custom/scripts/custom_tests/listaccounts.php", use_container_width=True)
+   
     # TICKET MANAGEMENT TOOLS
     elif tool == "✅ Support Ticket Checklist":
         st.title("✅ Support Ticket Checklist")
@@ -3172,6 +3399,27 @@ ORDER BY (data_length + index_length) DESC;""", language="sql")
         - **Edge**: `Ctrl+Shift+N` (Windows) or `Cmd+Shift+N` (Mac)
         - **Opera**: `Ctrl+Shift+N` (Windows) or `Cmd+Shift+N` (Mac)
         """)
+        
+    elif tool == "📜 Historical DNS":
+        st.title("📜 Historical DNS Records Checker")
+        st.markdown("Query historical DNS records from multiple free sources")
+    
+        domain = st.text_input("🌐 Enter Domain:", placeholder="example.com")
+    
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            check_virustotal = st.checkbox("VirusTotal", value=True)
+        with col2:
+            check_securitytrails = st.checkbox("SecurityTrails", value=True)
+        with col3:
+            record_type = st.selectbox("Record Type:", ["A", "AAAA", "MX", "NS", "SOA", "TXT"])
+    
+        if st.button("🔍 Check Historical DNS", use_container_width=True):
+            if domain:
+                with st.spinner("Querying historical DNS records..."):
+                    check_historical_dns(domain, check_virustotal, check_securitytrails, record_type)
+            else:
+                st.error("❌ Please enter a domain name")
 
 
 
