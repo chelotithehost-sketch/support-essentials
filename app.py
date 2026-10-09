@@ -1305,7 +1305,7 @@ else:
                 if uploaded_file or ticket_text:
                     with st.spinner("🤖 Analyzing ticket..."):
                         try:
-                            model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                            model = genai.GenerativeModel('gemini-3.5-flash-lite')
                             prompt = """Analyze this support ticket and provide:
                             
 1. **Issue Summary**: Brief description of the problem
@@ -1354,7 +1354,7 @@ Be specific and actionable."""
                 if symptom:
                     with st.spinner("🤖 Diagnosing..."):
                         try:
-                            model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                            model = genai.GenerativeModel('gemini-3.5-flash-lite')
                             prompt = f"""Diagnose this technical support issue:
 
 **Symptoms**: {symptom}
@@ -1410,7 +1410,7 @@ Be specific, technical, and actionable."""
                         
                         with st.spinner("🤖 Thinking..."):
                             try:
-                                model = genai.GenerativeModel('gemini-2.5-flash-lite')
+                                model = genai.GenerativeModel('gemini-3.5-flash-lite')
                                 
                                 context = """You are a technical support assistant for a web hosting company. 
                                 Provide clear, helpful, step-by-step answers about:
